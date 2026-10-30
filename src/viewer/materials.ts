@@ -1,12 +1,16 @@
 import * as THREE from 'three';
 import type { MaterialKey } from '../content/parts';
 
-type Extra = Partial<THREE.MeshPhysicalMaterialParameters>;
-const std = (color: number, roughness: number, metalness: number, extra: Extra = {}) =>
-  new THREE.MeshPhysicalMaterial({ color, roughness, metalness, ...extra });
+/* Performance: the prototype used MeshPhysicalMaterial with a light clearcoat on the plastics. The
+   clearcoat layer roughly doubles the lighting work per pixel on a ~600k-triangle scene, for a barely
+   visible sheen, so every part uses MeshStandardMaterial; the clearcoat arguments are kept below as a
+   record of the original look but are ignored. */
+type Extra = { clearcoat?: number; clearcoatRoughness?: number };
+const std = (color: number, roughness: number, metalness: number, _extra: Extra = {}) =>
+  new THREE.MeshStandardMaterial({ color, roughness, metalness });
 
 /** Base material library (ported from the prototype engine). */
-export function makeMaterials(): Record<MaterialKey, THREE.MeshPhysicalMaterial> {
+export function makeMaterials(): Record<MaterialKey, THREE.MeshStandardMaterial> {
   return {
     polyHousing: std(0x2b2f34, 0.62, 0.0, { clearcoat: 0.15, clearcoatRoughness: 0.6 }),
     polyFrame: std(0x3a3f46, 0.55, 0.0, { clearcoat: 0.2, clearcoatRoughness: 0.5 }),
@@ -53,11 +57,11 @@ export const CUT_COLORS: Record<MaterialKey, number> = {
 export interface TintUniform { value: THREE.Vector4 }
 
 /** Material with a tint uniform (mode emphasis) and a flat colour on back faces (section cut). */
-export type SectionMaterial = (THREE.MeshPhysicalMaterial | THREE.MeshStandardMaterial) & {
+export type SectionMaterial = THREE.MeshStandardMaterial & {
   userData: { tint: TintUniform; cut?: { value: THREE.Color } };
 };
 
-export function patchSection(mat: THREE.MeshPhysicalMaterial, cutColor: number): SectionMaterial {
+export function patchSection(mat: THREE.MeshStandardMaterial, cutColor: number): SectionMaterial {
   const m = mat as SectionMaterial;
   m.side = THREE.DoubleSide;
   m.userData.tint = { value: new THREE.Vector4(0, 0, 0, 0) };

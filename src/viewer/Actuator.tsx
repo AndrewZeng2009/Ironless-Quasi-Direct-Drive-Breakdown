@@ -40,9 +40,9 @@ export function Actuator({ model, engine }: Props) {
           mat.polygonOffset = true; mat.polygonOffsetFactor = -1; mat.polygonOffsetUnits = -4;
         }
         if (def.group === 'housing') {
-          // The housing's top face is coplanar with the output frame's top face (both 16.95 mm);
-          // push the housing back slightly so the frame wins instead of flickering.
-          mat.polygonOffset = true; mat.polygonOffsetFactor = 1; mat.polygonOffsetUnits = 4;
+          // The housing's top lip and the output frame's chamfered edge occupy a sliver of the same
+          // space (both simplified meshes); push the housing back so the frame wins cleanly there.
+          mat.polygonOffset = true; mat.polygonOffsetFactor = 2; mat.polygonOffsetUnits = 64;
         }
       }
       const mesh = new THREE.Mesh(def.geometry, mat);

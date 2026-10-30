@@ -1,4 +1,4 @@
-"""Replace the housing and rotor in actuator.glb with meshes tessellated from the author's STEP
+﻿"""Replace the housing and rotor in actuator.glb with meshes tessellated from the author's STEP
 print files, keeping every other node byte-for-byte.
 
 Why: the handoff's display mesh was simplified so hard (housing 48k, rotor 24k triangles) that the
@@ -6,8 +6,8 @@ housing's fine grille panels collapsed into holes. The repository's per-part STE
 (CAD/Print_Files/1x_outer_case.STEP, 1x_rotor.STEP) still have full detail.
 
 Steps (see README "Rebuilding the housing and rotor"):
-  1. python scripts/mesh_step.py 1x_rotor.STEP rotor.npz 14 4 0.8
-     python scripts/mesh_step.py 1x_outer_case.STEP case.npz 14 4 0.8
+  1. python scripts/mesh_step.py 1x_rotor.STEP rotor.npz 5 6 0.8
+     python scripts/mesh_step.py 1x_outer_case.STEP case.npz 5 6 0.8
   2. python scripts/swap_parts.py <original actuator.glb> <out actuator.glb> rotor.npz case.npz
 
 Placement (measured by shape matching against the original nodes; mm, +Y = motor axis):
@@ -17,6 +17,8 @@ The STEP outer case is a slightly later revision than the modelled design in pla
 floor plate under the motor, and it has a top plate that would sit inside the output frame. So:
   - outer wall (r >= 57.4 mm, where the original mesh has the holes): new surface is used;
   - inside that, new triangles are kept only within 1.5 mm of the original housing surface;
+  - triangles lying entirely in the output frame's ring zone (y > 7.4, r < 58.6 mm) are dropped from
+    both meshes, since the housing lip there pokes through the frame's chamfered edge;
   - original housing triangles > 1.5 mm from the new surface (the floor) are kept.
 
 Requires numpy.
@@ -75,11 +77,19 @@ Pof = Po.astype(np.float64)
 # output frame). Use it fully on the outer wall, where the original mesh has holes; inside that,
 # keep only new triangles that match the original housing within tolerance.
 WALL_R = 57.4
+# The output frame (y 7.55..16.80, r up to 58.5) sits in the housing's top; in the frame's ring zone
+# the STEP lip differs and would poke through the frame's chamfered edge, so the original housing
+# triangles are used there instead.
+FRAME_Y, FRAME_R = 7.4, 58.6
+in_frame_zone = lambda pts: (pts[:, 1] > FRAME_Y) & (np.hypot(pts[:, 0], pts[:, 2]) < FRAME_R)
 cn = (Pc[Ic[:, 0]] + Pc[Ic[:, 1]] + Pc[Ic[:, 2]]) / 3
 interior = np.hypot(cn[:, 0], cn[:, 2]) < WALL_R
 S_old = sample(Pof, Io, 200000, 11)
 off_design = np.zeros(len(Ic), bool)
 off_design[interior] = nn(cn[interior], S_old) > KEEP_IF_FARTHER_MM
+# drop triangles lying entirely inside the frame's ring zone; large top-face triangles that only
+# straddle its edge stay, so the housing's top surface keeps no notches
+off_design |= in_frame_zone(Pc[Ic[:, 0]]) & in_frame_zone(Pc[Ic[:, 1]]) & in_frame_zone(Pc[Ic[:, 2]])
 Ic = Ic[~off_design]
 used_n, local_n = np.unique(Ic, return_inverse=True)
 Pc = Pc[used_n]; Ic = local_n.reshape(-1, 3).astype(np.uint32)
@@ -87,7 +97,7 @@ print(f'housing: dropped {off_design.sum()} STEP triangles inside r<{WALL_R} mm 
 cent = (Pof[Io[:, 0]] + Pof[Io[:, 1]] + Pof[Io[:, 2]]) / 3
 S = sample(Pc, Ic, 150000, 7)
 # skip the far-from-axis band quickly: test every original triangle centroid
-far = nn(cent, S) > KEEP_IF_FARTHER_MM
+far = (nn(cent, S) > KEEP_IF_FARTHER_MM) & ~in_frame_zone(cent)
 keep = Io[far]
 used, local = np.unique(keep, return_inverse=True)
 P_keep = Po[used]; I_keep = local.reshape(-1, 3).astype(np.uint32) + len(Pc)

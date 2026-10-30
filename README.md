@@ -52,15 +52,15 @@ github.com/CKraft11/Ironless-QDD-Actuator):
 
 ```bash
 pip install gmsh numpy                     # in a virtual environment
-python scripts/mesh_step.py 1x_rotor.STEP rotor.npz 14 4 0.8
-python scripts/mesh_step.py 1x_outer_case.STEP case.npz 14 4 0.8
+python scripts/mesh_step.py 1x_rotor.STEP rotor.npz 5 6 0.8
+python scripts/mesh_step.py 1x_outer_case.STEP case.npz 5 6 0.8
 python scripts/swap_parts.py <handoff actuator.glb> actuator.raw.glb rotor.npz case.npz
 npx gltf-transform meshopt actuator.raw.glb public/models/actuator.glb --level medium
 ```
 
 `swap_parts.py` documents the measured placement and the rule for the parts of the STEP housing that
 are a later revision (floor plate missing, extra top plate): the original geometry wins there. The
-final file is meshopt-compressed with quantized positions (about 2.6 MB, 1.3 MB gzipped);
+final file is meshopt-compressed with quantized positions (about 2.7 MB, ~1.4 MB gzipped);
 `src/viewer/model.ts` registers the decoder that ships with three.js.
 
 ## Deploy

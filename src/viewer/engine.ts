@@ -118,8 +118,6 @@ export class ViewerEngine {
   // ---- input / overlay
   private raycaster = new THREE.Raycaster();
   private pointer = { x: 0, y: 0, inside: false, moved: false, down: false };
-  private pickT = 0;
-  private canvas: HTMLCanvasElement | null = null;
   private unbind: (() => void) | null = null;
   overlay: HTMLCanvasElement | null = null;
   readout: HTMLElement | null = null;
@@ -151,7 +149,7 @@ export class ViewerEngine {
     if (!this.ready) return false;
     const spinning = this.playing && (this.mode === 'gearbox' || this.mode === 'motor' || this.mode === 'torque');
     return this.explodeTarget != null || this.camGoal != null || this.stageP < 1 || spinning
-      || this.pointer.down || (this.pointer.inside && this.pointer.moved) || this.exposureSettling
+      || this.pointer.down || this.exposureSettling
       || (this.kind === 'hero' && !motion.reduced) // slow auto-rotation
       || (this.mode === 'torque' && !motion.reduced); // marching dashes on the torque path
   }
@@ -183,7 +181,7 @@ export class ViewerEngine {
 
   bindInput(el: HTMLCanvasElement) {
     this.unbind?.();
-    this.canvas = el;
+
     if (this.kind === 'hero') return;
     el.style.touchAction = 'none';
     const ptrs = new Map<number, { x: number; y: number }>();
@@ -204,12 +202,32 @@ export class ViewerEngine {
       this.camGoal = null;
       this.wake();
     };
+    // Hover picking runs on a short timer, not in the render loop, and only redraws when the part
+    // under the cursor changes. Synthetic moves that browsers fire while the page scrolls under a
+    // still cursor (movement 0) are ignored, so scrolling past the viewer costs nothing.
+    let hoverTimer: ReturnType<typeof setTimeout> | null = null;
+    const scheduleHover = () => {
+      if (hoverTimer) return;
+      hoverTimer = setTimeout(() => {
+        hoverTimer = null;
+        if (!this.pointer.inside || this.pointer.down) return;
+        const hg = this.pick(this.pointer.x, this.pointer.y, false);
+        if (hg !== this.hover) {
+          this.hover = hg; this.cb.onHover?.(hg);
+          el.style.cursor = hg ? 'pointer' : 'grab';
+          this.wake();
+        }
+      }, 50);
+    };
     const move = (e: PointerEvent) => {
       const p = pos(e);
       this.pointer.x = (p.x / p.w) * 2 - 1; this.pointer.y = -(p.y / p.h) * 2 + 1;
-      this.pointer.inside = true; this.pointer.moved = true;
-      this.wake(); // hover picking and orbit both happen in the next frame
-      if (!ptrs.has(e.pointerId)) return;
+      this.pointer.inside = true;
+      if (!ptrs.has(e.pointerId)) {
+        if (e.movementX !== 0 || e.movementY !== 0) scheduleHover();
+        return;
+      }
+      this.wake(); // orbit / pan / pinch
       ptrs.set(e.pointerId, p);
       if (ptrs.size === 2) {
         const [a, b] = [...ptrs.values()];
@@ -233,30 +251,46 @@ export class ViewerEngine {
       if (!ptrs.size) { last = null; this.pointer.down = false; downAt = null; }
       this.wake();
     };
-    const leave = () => {
-      this.pointer.inside = false;
-      if (this.hover) { this.hover = null; this.cb.onHover?.(null); }
-      this.engaged = false;
-      this.wake();
-    };
-    const wheel = (e: WheelEvent) => {
-      if (!this.engaged && !e.ctrlKey) { this.cb.onWheelHint?.(); return; }
+    // Wheel: a passive listener (never blocks page scrolling) shows the "click first" hint; only
+    // after the user clicks or focuses the viewer is a blocking listener added to zoom.
+    let zoomBound = false;
+    const zoom = (e: WheelEvent) => {
       e.preventDefault(); this.camGoal = null;
       this.cam.dist = clamp(this.cam.dist * Math.exp(e.deltaY * 0.0012), 8, 90);
       this.wake();
     };
+    const engage = () => {
+      this.engaged = true;
+      if (!zoomBound) { el.addEventListener('wheel', zoom, { passive: false }); zoomBound = true; }
+    };
+    const disengage = () => {
+      this.engaged = false;
+      if (zoomBound) { el.removeEventListener('wheel', zoom); zoomBound = false; }
+    };
+    const hint = (e: WheelEvent) => { if (!this.engaged && !e.ctrlKey) this.cb.onWheelHint?.(); };
+    const leave = () => {
+      this.pointer.inside = false;
+      if (hoverTimer) { clearTimeout(hoverTimer); hoverTimer = null; }
+      if (this.hover) { this.hover = null; this.cb.onHover?.(null); el.style.cursor = 'grab'; this.wake(); }
+      disengage();
+    };
     const ctx = (e: Event) => e.preventDefault();
     const key = (e: KeyboardEvent) => { this.handleKey(e); };
-    const focus = () => { this.engaged = true; };
-    el.addEventListener('pointerdown', down); el.addEventListener('pointermove', move);
+    el.addEventListener('pointerdown', down); el.addEventListener('pointerdown', engage);
+    el.addEventListener('pointermove', move);
     el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
-    el.addEventListener('pointerleave', leave); el.addEventListener('wheel', wheel, { passive: false });
-    el.addEventListener('contextmenu', ctx); el.addEventListener('keydown', key); el.addEventListener('focus', focus);
+    el.addEventListener('pointerleave', leave); el.addEventListener('wheel', hint, { passive: true });
+    el.addEventListener('contextmenu', ctx); el.addEventListener('keydown', key);
+    el.addEventListener('focus', engage); el.addEventListener('blur', disengage);
     this.unbind = () => {
-      el.removeEventListener('pointerdown', down); el.removeEventListener('pointermove', move);
+      el.removeEventListener('pointerdown', down); el.removeEventListener('pointerdown', engage);
+      el.removeEventListener('pointermove', move);
       el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up);
-      el.removeEventListener('pointerleave', leave); el.removeEventListener('wheel', wheel);
-      el.removeEventListener('contextmenu', ctx); el.removeEventListener('keydown', key); el.removeEventListener('focus', focus);
+      el.removeEventListener('pointerleave', leave); el.removeEventListener('wheel', hint);
+      el.removeEventListener('contextmenu', ctx); el.removeEventListener('keydown', key);
+      el.removeEventListener('focus', engage); el.removeEventListener('blur', disengage);
+      disengage();
+      if (hoverTimer) clearTimeout(hoverTimer);
     };
   }
 
@@ -518,18 +552,6 @@ export class ViewerEngine {
       else if (sel && mode === 'explore' && !this.isolated) { if (tint.w === 0) tint.set(0.05, 0.055, 0.06, 0.35); }
     }
     if (this.shadow) this.shadow.visible = !(this.section && this.sectionMode === 'radial');
-    // hover picking (throttled)
-    if (this.kind !== 'hero' && this.pointer.inside && this.pointer.moved && !this.pointer.down) {
-      this.pointer.moved = false;
-      if (!this.pickT || now - this.pickT > 60) {
-        this.pickT = now;
-        const hg = this.pick(this.pointer.x, this.pointer.y, false);
-        if (hg !== this.hover) {
-          this.hover = hg; this.cb.onHover?.(hg);
-          if (this.canvas) this.canvas.style.cursor = hg ? 'pointer' : 'grab';
-        }
-      }
-    }
   }
 
   /** Called with the animated explode amount (0..1) so the slider can follow. */

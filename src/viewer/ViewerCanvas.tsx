@@ -66,7 +66,9 @@ function Rig({ engine }: { engine: ViewerEngine }) {
     engine.drawOverlay(now);
     if (!engine.needsAnotherFrame()) return;
     if (engine.kind === 'hero') {
-      if (!heroTimer.current) heroTimer.current = setTimeout(() => { heroTimer.current = null; invalidate(); }, 33);
+      // ~30 fps idle rotation, paused while the page is actively scrolling so scrolling stays smooth
+      const scrolling = performance.now() - lastScrollAt < 200;
+      if (!heroTimer.current) heroTimer.current = setTimeout(() => { heroTimer.current = null; invalidate(); }, scrolling ? 200 : 33);
     } else {
       invalidate();
     }
@@ -83,6 +85,11 @@ function Rig({ engine }: { engine: ViewerEngine }) {
 }
 
 const interactiveCanvas = (e: ViewerEngine) => e.kind === 'explorer';
+
+let lastScrollAt = 0;
+if (typeof window !== 'undefined') {
+  window.addEventListener('scroll', () => { lastScrollAt = performance.now(); }, { passive: true });
+}
 const MAX_DPR = 1.5;
 
 /** One WebGL canvas per view. Rendering pauses while the canvas is off-screen. */
@@ -150,6 +157,9 @@ export function ViewerCanvas({ engine, onStatus, label, interactive, overlay, ch
         <Canvas
           frameloop={onScreen ? 'demand' : 'never'}
           dpr={dpr}
+          // don't re-measure (and redraw) on every page scroll; the engine reads the canvas
+          // position itself when it needs it
+          resize={{ scroll: false, debounce: { scroll: 0, resize: 50 } }}
           camera={{ fov: 30, near: 0.5, far: 400, position: [0, 0, 34] }}
           gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
           onCreated={({ gl }) => {
