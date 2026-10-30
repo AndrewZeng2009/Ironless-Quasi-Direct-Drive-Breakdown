@@ -62,6 +62,13 @@ const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 const defHidden = (): Partial<Record<GroupKey, boolean>> => ({ ...DEFAULT_HIDDEN });
 
+/** Public methods that change what is drawn; each one requests a redraw. */
+const WAKE_METHODS = [
+  'attachNodes', 'handleKey', 'setExplode', 'animateExplode', 'setSection', 'setView', 'resetView', 'select',
+  'setHover', 'focus', 'setVisible', 'toggleVisible', 'isolate', 'showAll', 'setPlaying', 'setSpeed', 'setOpenTop',
+  'setLabels', 'setStage', 'setTorqueStep', 'setMode', 'resizeOverlay',
+] as const;
+
 export class ViewerEngine {
   readonly kind: ViewerKind;
   cb: EngineCallbacks;
@@ -121,11 +128,32 @@ export class ViewerEngine {
   private h = 1;
   private od = 1;
   private t0 = performance.now();
+  private exposureSettling = false;
+
+  /** Asks the canvas for a redraw. The canvas renders on demand, so anything that changes the
+      picture must call this (set by ViewerCanvas to R3F's invalidate). */
+  wake: () => void = () => {};
 
   constructor(kind: ViewerKind, cb: EngineCallbacks = {}) {
     this.kind = kind;
     this.cb = cb;
     if (kind === 'hero') this.applyViewNow('hero');
+    // every public state change requests a redraw
+    const self = this as unknown as Record<string, (...a: unknown[]) => unknown>;
+    for (const name of WAKE_METHODS) {
+      const fn = self[name];
+      self[name] = (...a: unknown[]) => { const r = fn.apply(this, a); this.wake(); return r; };
+    }
+  }
+
+  /** True while something is still moving, so the canvas should draw again next frame. */
+  needsAnotherFrame(): boolean {
+    if (!this.ready) return false;
+    const spinning = this.playing && (this.mode === 'gearbox' || this.mode === 'motor' || this.mode === 'torque');
+    return this.explodeTarget != null || this.camGoal != null || this.stageP < 1 || spinning
+      || this.pointer.down || (this.pointer.inside && this.pointer.moved) || this.exposureSettling
+      || (this.kind === 'hero' && !motion.reduced) // slow auto-rotation
+      || (this.mode === 'torque' && !motion.reduced); // marching dashes on the torque path
   }
 
   // ------------------------------------------------------------------ setup
@@ -174,11 +202,13 @@ export class ViewerEngine {
       last = p;
       downAt = { x: p.x, y: p.y, t: performance.now(), button: e.button, shift: e.shiftKey };
       this.camGoal = null;
+      this.wake();
     };
     const move = (e: PointerEvent) => {
       const p = pos(e);
       this.pointer.x = (p.x / p.w) * 2 - 1; this.pointer.y = -(p.y / p.h) * 2 + 1;
       this.pointer.inside = true; this.pointer.moved = true;
+      this.wake(); // hover picking and orbit both happen in the next frame
       if (!ptrs.has(e.pointerId)) return;
       ptrs.set(e.pointerId, p);
       if (ptrs.size === 2) {
@@ -201,16 +231,19 @@ export class ViewerEngine {
       ptrs.delete(e.pointerId);
       if (ptrs.size < 2) pinch = null;
       if (!ptrs.size) { last = null; this.pointer.down = false; downAt = null; }
+      this.wake();
     };
     const leave = () => {
       this.pointer.inside = false;
       if (this.hover) { this.hover = null; this.cb.onHover?.(null); }
       this.engaged = false;
+      this.wake();
     };
     const wheel = (e: WheelEvent) => {
       if (!this.engaged && !e.ctrlKey) { this.cb.onWheelHint?.(); return; }
       e.preventDefault(); this.camGoal = null;
       this.cam.dist = clamp(this.cam.dist * Math.exp(e.deltaY * 0.0012), 8, 90);
+      this.wake();
     };
     const ctx = (e: Event) => e.preventDefault();
     const key = (e: KeyboardEvent) => { this.handleKey(e); };
@@ -411,7 +444,11 @@ export class ViewerEngine {
     if (!this.ready) return;
     if (this.kind !== 'hero' && this.gl) {
       const goal = this.section ? 1.32 : 1.05;
-      this.gl.toneMappingExposure += (goal - this.gl.toneMappingExposure) * Math.min(1, dt * 4);
+      // short exposure fade when the section cut toggles; instant with reduced motion
+      if (motion.reduced) this.gl.toneMappingExposure = goal;
+      else this.gl.toneMappingExposure += (goal - this.gl.toneMappingExposure) * Math.min(1, dt * 4);
+      this.exposureSettling = Math.abs(goal - this.gl.toneMappingExposure) > 0.003;
+      if (!this.exposureSettling) this.gl.toneMappingExposure = goal;
     }
     // kinematics: carrier θ; sun/rotor 7θ; planets orbit θ and spin −2.4θ about their own axis
     const spinOn = this.playing && (this.mode === 'gearbox' || this.mode === 'motor' || this.mode === 'torque');

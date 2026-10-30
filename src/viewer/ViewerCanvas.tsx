@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Bvh } from '@react-three/drei';
+import { Bvh, PerformanceMonitor } from '@react-three/drei';
 import { Actuator } from './Actuator';
 import { loadModel, type ModelData } from './model';
 import { shadowTexture, studioEnvironment } from './environment';
@@ -47,10 +47,29 @@ function Rig({ engine }: { engine: ViewerEngine }) {
   useEffect(() => { engine.key = key.current; }, [engine]);
   useEffect(() => { engine.resizeOverlay(size.width, size.height); }, [engine, size.width, size.height]);
 
+  // On-demand rendering: draw only when something changed or is still moving.
+  // The hero's slow idle rotation is capped at ~30 fps to leave headroom for scrolling.
+  const invalidate = useThree((s) => s.invalidate);
+  const heroTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    engine.wake = () => invalidate();
+    invalidate();
+    return () => {
+      engine.wake = () => {};
+      if (heroTimer.current) clearTimeout(heroTimer.current);
+    };
+  }, [engine, invalidate]);
+
   useFrame((_, delta) => {
     const now = performance.now();
     engine.frame(now, delta);
     engine.drawOverlay(now);
+    if (!engine.needsAnotherFrame()) return;
+    if (engine.kind === 'hero') {
+      if (!heroTimer.current) heroTimer.current = setTimeout(() => { heroTimer.current = null; invalidate(); }, 33);
+    } else {
+      invalidate();
+    }
   });
 
   return (
@@ -64,6 +83,7 @@ function Rig({ engine }: { engine: ViewerEngine }) {
 }
 
 const interactiveCanvas = (e: ViewerEngine) => e.kind === 'explorer';
+const MAX_DPR = 1.5;
 
 /** One WebGL canvas per view. Rendering pauses while the canvas is off-screen. */
 export function ViewerCanvas({ engine, onStatus, label, interactive, overlay, children }: Props) {
@@ -72,6 +92,10 @@ export function ViewerCanvas({ engine, onStatus, label, interactive, overlay, ch
   const [model, setModel] = useState<ModelData | null>(null);
   const [onScreen, setOnScreen] = useState(true);
   const [webgl, setWebgl] = useState(true);
+  // Resolution: at most 1.5× (sharp on high-DPI screens at a fraction of the cost of 2×),
+  // dropping to 1× if the frame rate can't keep up.
+  const maxDpr = Math.min(typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1, MAX_DPR);
+  const [dpr, setDpr] = useState(maxDpr);
 
   useEffect(() => {
     let alive = true;
@@ -124,8 +148,8 @@ export function ViewerCanvas({ engine, onStatus, label, interactive, overlay, ch
     <div ref={wrap} className="viewer-canvas" data-onscreen={onScreen ? '1' : '0'}>
       {webgl && (
         <Canvas
-          frameloop={onScreen ? 'always' : 'never'}
-          dpr={[1, engine.kind === 'hero' ? 2 : 1.75]}
+          frameloop={onScreen ? 'demand' : 'never'}
+          dpr={dpr}
           camera={{ fov: 30, near: 0.5, far: 400, position: [0, 0, 34] }}
           gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
           onCreated={({ gl }) => {
@@ -147,6 +171,10 @@ export function ViewerCanvas({ engine, onStatus, label, interactive, overlay, ch
           }}
         >
           <Rig engine={engine} />
+          {/* hero renders at ~30 fps by design, so only the explorer is monitored */}
+          {interactive && (
+            <PerformanceMonitor onDecline={() => setDpr(1)} onIncline={() => setDpr(maxDpr)} flipflops={3} onFallback={() => setDpr(1)} />
+          )}
           {model && (interactive ? (
             <Bvh firstHitOnly={false}>
               <Actuator model={model} engine={engine} />
