@@ -39,6 +39,11 @@ export function Actuator({ model, engine }: Props) {
           // win the depth tie (otherwise the pocket floor z-fights over the magnet in section views).
           mat.polygonOffset = true; mat.polygonOffsetFactor = -1; mat.polygonOffsetUnits = -4;
         }
+        if (def.group === 'housing') {
+          // The housing's top face is coplanar with the output frame's top face (both 16.95 mm);
+          // push the housing back slightly so the frame wins instead of flickering.
+          mat.polygonOffset = true; mat.polygonOffsetFactor = 1; mat.polygonOffsetUnits = 4;
+        }
       }
       const mesh = new THREE.Mesh(def.geometry, mat);
       mesh.name = def.name;

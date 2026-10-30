@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { GROUPS, type GroupKey, type MaterialKey } from '../content/parts';
 import type { DecalKind } from './decals';
 
@@ -74,6 +75,18 @@ export function loadModel(onProgress?: (fraction: number) => void): Promise<Mode
   return pending;
 }
 
+/** Quantized (integer, normalized) positions can't hold transformed coordinates, so convert to
+    float32 before baking the node transform into the geometry. */
+function toFloatPositions(g: THREE.BufferGeometry): THREE.BufferGeometry {
+  const pos = g.getAttribute('position') as THREE.BufferAttribute;
+  if (pos.array instanceof Float32Array && !pos.normalized) return g;
+  const f = new Float32Array(pos.count * 3);
+  for (let i = 0; i < pos.count; i++) { f[i * 3] = pos.getX(i); f[i * 3 + 1] = pos.getY(i); f[i * 3 + 2] = pos.getZ(i); }
+  g.setAttribute('position', new THREE.BufferAttribute(f, 3));
+  g.deleteAttribute('normal'); // recomputed below in the final frame
+  return g;
+}
+
 async function fetchJson<T>(url: string): Promise<T> {
   const r = await fetch(url);
   if (!r.ok) throw new Error(url + ' ' + r.status);
@@ -82,7 +95,8 @@ async function fetchJson<T>(url: string): Promise<T> {
 
 async function build(onProgress?: (fraction: number) => void): Promise<ModelData> {
   performance.mark('qdd-model-fetch');
-  const loader = new GLTFLoader();
+  // actuator.glb is meshopt-compressed with quantized positions (gltf-transform); see README
+  const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
   const [gltf, parts, decals] = await Promise.all([
     loader.loadAsync(MODEL_URLS.glb, (e) => { if (onProgress && e.total) onProgress(e.loaded / e.total); }),
     fetchJson<PartsJson>(MODEL_URLS.parts),
@@ -98,7 +112,7 @@ async function build(onProgress?: (fraction: number) => void): Promise<ModelData
     if (!mesh.isMesh) return;
     const m = meta.get(mesh.name) ?? meta.get(mesh.parent?.name ?? '');
     if (!m) { console.warn('No metadata for node', mesh.name); return; }
-    const geometry = mesh.geometry.clone();
+    const geometry = toFloatPositions(mesh.geometry.clone());
     geometry.applyMatrix4(mesh.matrixWorld);
     if (!geometry.attributes.normal) geometry.computeVertexNormals();
     let center: THREE.Vector3 | null = null;

@@ -20,6 +20,7 @@
     "zustand": "^4.5.5"
   },
   "devDependencies": {
+    "@gltf-transform/cli": "^4.5.1",
     "@playwright/test": "^1.48.2",
     "@types/node": "^20.17.6",
     "@types/react": "^18.3.12",

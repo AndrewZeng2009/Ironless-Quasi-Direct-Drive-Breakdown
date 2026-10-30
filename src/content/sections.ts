@@ -10,7 +10,7 @@ export const HERO = {
   kicker: 'Open-source robotics actuator · 2025',
   lede: 'A low-cost quasi-direct-drive actuator built around a 3D-printed rotor carrying a Halbach magnet array — no iron back-iron — and a 7:1 planetary gearbox with cycloidal “lobe” teeth. Designed, built and documented by Caden Kraft; taken apart here from his original Fusion 360 model.',
   canvasLabel: 'Slowly rotating 3D render of the complete actuator',
-  renderNote: 'Real-time render · decimated display mesh from the author’s Fusion 360 file',
+  renderNote: 'Real-time render · display mesh from the author’s CAD files',
   sizeNote: 'Ø ≈121 mm · 728 g (reported)',
 };
 
@@ -204,7 +204,7 @@ export const SOURCE_COPY = {
   independent: 'This page is an independent educational visualization. It is not an official project site and is not endorsed by Caden Kraft, Makerbase or any supplier.',
   howTitle: 'How this visualization was made, and what it cannot tell you',
   how: [
-    ['Geometry.', 'The shared .f3d file embeds Fusion’s display tessellation (≈1.06 M vertices, 287 unique bodies). It was decoded, decimated to about 175 k unique triangles with crease-preserving normals, and re-instanced for 750 placed parts. B-rep surfaces, tolerances and body names are not used.'],
+    ['Geometry.', 'The shared .f3d file embeds Fusion’s display tessellation (≈1.06 M vertices, 287 unique bodies). It was decoded, decimated to about 175 k unique triangles with crease-preserving normals, and re-instanced for 750 placed parts. B-rep surfaces, tolerances and body names are not used. That decimation erased the housing’s fine grille panels, leaving holes, so the housing and rotor were later re-meshed from the per-part STEP print files in the repository (1x_outer_case, 1x_rotor) and aligned to the original parts by shape matching. The STEP housing is a slightly later revision; where it differs from the modelled design (no floor plate, an extra top plate) the original geometry was kept.'],
     ['Placement.', 'Most occurrence transforms come straight from the file. The gearbox and controller sub-assemblies needed a parent transform that we reconstructed (a 90° axis change, plus a 24.4 mm offset for the board) and verified visually against the CAD preview. Small misplacements are possible.'],
     ['Identification.', 'Parts were named from shape, BOM quantities and the article — for example six identical 5×14×5 bearings, fifteen M4 heat-set inserts. The controller was rebuilt rather than taken from the CAD: outline and six Ø3.3 mm holes from Makerbase’s dimension drawing (63 × 58 mm), parts placed from Makerbase product photos (about ±1 mm), silkscreen redrawn, part heights estimated.'],
     ['Motion.', 'Gear and rotor motion follow ideal kinematics from lobe counts. Coil glow follows the published winding pattern at 21 electrical cycles per turn. Field sketches are illustrative. Nothing here is a structural, thermal or electromagnetic simulation, and no test was reproduced.'],
