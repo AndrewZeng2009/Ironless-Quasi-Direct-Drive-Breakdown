@@ -1,0 +1,1059 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Anatomy of an Ironless QDD Actuator</title>
+<script src="./support.js"></script>
+<script src="/_blob/2b28c9a65c5efe927b5ee3200ad046b7"></script>
+<script src="/_blob/4540f087616c719608a6a2b6d66ab89a"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0b0d0f;color:#ecebe6}
+*{box-sizing:border-box}
+a{color:#9fd3ea;text-decoration-thickness:1px;text-underline-offset:3px}
+a:hover{color:#d4eef9}
+.q-btn{font:500 12px/1 "IBM Plex Mono",ui-monospace,monospace;letter-spacing:.02em;color:#d9dee2;background:#15191d;border:1px solid rgba(214,222,230,.16);border-radius:6px;padding:0 12px;min-height:36px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;white-space:nowrap;text-decoration:none}
+.q-btn:hover{border-color:rgba(124,196,224,.6);color:#fff}
+.q-btn[aria-pressed="true"]{background:#16303c;border-color:#7cc4e0;color:#e8f6fc}
+.q-btn:focus-visible,.q-link:focus-visible,.q-row:focus-visible,canvas:focus-visible,.q-cell:focus-visible,.q-chip:focus-visible{outline:2px solid #7cc4e0;outline-offset:2px}
+.q-cta{font:600 14px/1 "Archivo",system-ui,sans-serif;font-stretch:112%;letter-spacing:.04em;text-transform:uppercase;color:#0b0d0f;background:#ecebe6;border-radius:999px;padding:0 26px;min-height:52px;display:inline-flex;align-items:center;gap:12px;text-decoration:none;border:0}
+.q-cta:hover{background:#ffffff;color:#0b0d0f}
+.q-ghost{font:500 13px/1 "IBM Plex Mono",monospace;color:#ecebe6;border:1px solid rgba(236,235,230,.28);border-radius:999px;padding:0 20px;min-height:52px;display:inline-flex;align-items:center;gap:10px;text-decoration:none}
+.q-ghost:hover{border-color:#ecebe6;color:#fff}
+.q-row{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:10px;width:100%;padding:7px 8px;border-radius:5px;cursor:pointer;font:400 12.5px/1.25 "IBM Plex Mono",monospace;color:#cfd5da;min-height:34px}
+.q-row:hover{background:rgba(124,196,224,.08)}
+.q-icon{all:unset;box-sizing:border-box;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;border-radius:5px;cursor:pointer;color:#9aa3ab;flex:none}
+.q-icon:hover{background:rgba(214,222,230,.08);color:#fff}
+.q-icon:focus-visible{outline:2px solid #7cc4e0}
+.q-chip{all:unset;box-sizing:border-box;font:500 11px/1 "IBM Plex Mono",monospace;letter-spacing:.04em;text-transform:uppercase;padding:0 10px;min-height:30px;display:inline-flex;align-items:center;border-radius:999px;border:1px solid rgba(214,222,230,.18);color:#b9c0c6;cursor:pointer}
+.q-chip:hover{border-color:#7cc4e0;color:#fff}
+.q-chip[aria-pressed="true"]{background:#ecebe6;color:#0b0d0f;border-color:#ecebe6}
+.q-cell{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:8px;border:1px solid rgba(214,222,230,.12);background:#111417}
+.q-cell:hover{border-color:rgba(124,196,224,.5)}
+.q-cell[aria-pressed="true"]{border-color:#7cc4e0;background:#10212a}
+.q-link{color:#ecebe6;text-decoration:none;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:16px 0;border-bottom:1px solid rgba(214,222,230,.12);font:500 15px/1.3 "Archivo",sans-serif}
+.q-link:hover{color:#9fd3ea}
+.q-range{-webkit-appearance:none;appearance:none;width:100%;height:28px;background:transparent;cursor:pointer}
+.q-range::-webkit-slider-runnable-track{height:2px;background:rgba(214,222,230,.25)}
+.q-range::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#ecebe6;margin-top:-7px;border:2px solid #0b0d0f;box-shadow:0 0 0 1px #7cc4e0}
+.q-range::-moz-range-track{height:2px;background:rgba(214,222,230,.25)}
+.q-range::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#ecebe6;border:2px solid #0b0d0f}
+.q-range:focus-visible{outline:2px solid #7cc4e0;outline-offset:2px}
+@keyframes qspin{to{transform:rotate(360deg)}}
+@keyframes qspinr{to{transform:rotate(-360deg)}}
+@keyframes qdash{to{stroke-dashoffset:-12}}
+@keyframes qpulse{0%,100%{opacity:.35}50%{opacity:1}}
+.g-anim{transform-box:fill-box;transform-origin:50% 50%}
+.g-carrier{animation:qspin 42s linear infinite}
+.g-sun{animation:qspin 6s linear infinite}
+.g-planet{animation:qspinr 17.5s linear infinite}
+.gears[data-paused="1"] .g-anim{animation-play-state:paused}
+.flux{stroke-dasharray:2 4;animation:qdash 1.6s linear infinite}
+.pulse{animation:qpulse 2.4s ease-in-out infinite}
+@media (prefers-reduced-motion: reduce){.g-anim,.flux,.pulse{animation:none}}
+@media (max-width:760px){.q-hide-sm{display:none !important}}
+</style>
+</helmet>
+
+<div style="--acc: {{accent}}; background: #0b0d0f; color: #ecebe6; font-family: 'Archivo', system-ui, -apple-system, 'Segoe UI', sans-serif; font-stretch: 100%; min-width: 0; overflow-x: hidden">
+
+<!-- ============================================================ TOP BAR -->
+<header style="max-width: 1360px; margin: 0 auto; padding: 22px clamp(16px, 4vw, 40px); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 32px; border-bottom: 1px solid rgba(214,222,230,0.10)">
+  <div style="display: flex; align-items: center; gap: 14px">
+    <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="12.5" fill="none" stroke="#ecebe6" stroke-width="1.2"></circle><circle cx="14" cy="14" r="5" fill="none" stroke="#7cc4e0" stroke-width="1.2"></circle><circle cx="14" cy="5.5" r="1.4" fill="#ecebe6"></circle></svg>
+    <div style="display: flex; flex-direction: column; gap: 3px">
+      <span style="font: 600 13px/1 'Archivo', sans-serif; font-stretch: 118%; letter-spacing: 0.08em; text-transform: uppercase">QDD / Teardown</span>
+      <span style="font: 400 11px/1 'IBM Plex Mono', monospace; color: #9aa3ab">Independent visualization · design by Caden Kraft</span>
+    </div>
+  </div>
+  <nav aria-label="Sections" style="display: flex; flex-wrap: wrap; gap: 6px 22px; font: 500 12px/1 'IBM Plex Mono', monospace; letter-spacing: 0.03em">
+    <a href="#explorer" style="color: #cfd5da; text-decoration: none; padding: 8px 0">Explorer</a>
+    <a href="#stack" style="color: #cfd5da; text-decoration: none; padding: 8px 0">Assembly</a>
+    <a href="#motor" style="color: #cfd5da; text-decoration: none; padding: 8px 0">Motor</a>
+    <a href="#gearbox" style="color: #cfd5da; text-decoration: none; padding: 8px 0">Gearbox</a>
+    <a href="#torque" style="color: #cfd5da; text-decoration: none; padding: 8px 0">Torque path</a>
+    <a href="#performance" style="color: #cfd5da; text-decoration: none; padding: 8px 0">Performance</a>
+    <a href="#build" style="color: #cfd5da; text-decoration: none; padding: 8px 0">CAD → hardware</a>
+    <a href="#source" style="color: #cfd5da; text-decoration: none; padding: 8px 0">Source</a>
+  </nav>
+</header>
+
+<!-- ============================================================ 1 HERO -->
+<section aria-labelledby="hero-title" style="position: relative; max-width: 1360px; margin: 0 auto; padding: clamp(36px, 6vw, 72px) clamp(16px, 4vw, 40px) 40px; display: flex; flex-wrap: wrap; align-items: center; gap: 24px 40px">
+  <div style="flex: 1 1 440px; min-width: 0; display: flex; flex-direction: column; gap: 28px; position: relative; z-index: 2">
+    <div style="display: flex; align-items: center; gap: 12px; font: 500 11px/1 'IBM Plex Mono', monospace; letter-spacing: 0.12em; text-transform: uppercase; color: #9aa3ab">
+      <span style="width: 28px; height: 1px; background: #7cc4e0"></span>
+      <span>Open-source robotics actuator · 2025</span>
+    </div>
+    <h1 id="hero-title" style="margin: 0; font-family: 'Archivo', sans-serif; font-weight: 300; font-stretch: 112%; font-size: clamp(44px, 6.6vw, 96px); line-height: 0.94; letter-spacing: -0.025em; text-wrap: balance">Anatomy of an <span style="font-weight: 800; font-stretch: 125%">Ironless</span> QDD Actuator</h1>
+    <p style="margin: 0; max-width: 34rem; font-size: clamp(16px, 1.4vw, 19px); line-height: 1.55; color: #c3c9ce; text-wrap: pretty">A low-cost quasi-direct-drive actuator built around a 3D-printed rotor carrying a Halbach magnet array — no iron back-iron — and a 7:1 planetary gearbox with cycloidal “lobe” teeth. Designed, built and documented by Caden Kraft; taken apart here from his original Fusion 360 model.</p>
+    <div style="display: flex; flex-wrap: wrap; gap: 12px">
+      <a class="q-cta" href="#explorer">Explore the actuator <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6"></path></svg></a>
+      <a class="q-ghost" href="https://cadenkraft.com/ironless-cycloidal-planetary-actuator/" target="_blank" rel="noopener">Original article ↗</a>
+    </div>
+  </div>
+  <figure style="flex: 1.35 1 520px; min-width: 0; margin: 0; position: relative">
+    <div style="position: relative; height: clamp(360px, 52vw, 640px); border-radius: 4px; background: radial-gradient(60% 55% at 50% 52%, #1b2127 0%, #111417 55%, #0b0d0f 100%)">
+      <canvas ref="{{setHeroCanvas}}" aria-label="Slowly rotating 3D render of the complete actuator" role="img" style="position: absolute; inset: 0; width: 100%; height: 100%; display: block"></canvas>
+      <sc-if value="{{heroLoading}}" hint-placeholder-val="{{ true }}">
+        <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font: 500 11px/1 'IBM Plex Mono', monospace; letter-spacing: 0.1em; text-transform: uppercase; color: #8b939b"><span class="pulse">Loading CAD geometry…</span></div>
+      </sc-if>
+      <div style="position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-between; gap: 12px; padding: 14px 16px; font: 400 10.5px/1.4 'IBM Plex Mono', monospace; color: #8b939b">
+        <span>Real-time render · decimated display mesh from the author’s Fusion 360 file</span>
+        <span class="q-hide-sm">Ø ≈121 mm · 728 g (reported)</span>
+      </div>
+    </div>
+  </figure>
+  <div role="list" aria-label="Key figures" style="flex: 1 1 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr)); gap: 1px; background: rgba(214,222,230,0.12); border-top: 1px solid rgba(214,222,230,0.12); border-bottom: 1px solid rgba(214,222,230,0.12); margin-top: 8px">
+    <sc-for list="{{heroStats}}" as="s" hint-placeholder-count="5">
+      <div role="listitem" style="background: #0b0d0f; padding: 20px 18px 18px; display: flex; flex-direction: column; gap: 8px">
+        <span style="font: 300 34px/1 'Archivo', sans-serif; font-stretch: 110%; letter-spacing: -0.02em">{{s.v}}<span style="font-size: 15px; font-weight: 500; color: #9aa3ab; margin-left: 4px">{{s.u}}</span></span>
+        <span style="font: 500 12.5px/1.3 'Archivo', sans-serif; color: #d9dee2">{{s.l}}</span>
+        <span style="font: 400 10.5px/1.4 'IBM Plex Mono', monospace; color: #8b939b">{{s.q}}</span>
+      </div>
+    </sc-for>
+  </div>
+</section>
+
+<!-- ============================================================ 2 EXPLORER -->
+<section id="explorer" aria-labelledby="explorer-title" style="max-width: 1360px; margin: 0 auto; padding: 72px clamp(16px, 4vw, 40px) 40px">
+  <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 20px 40px; margin-bottom: 26px">
+    <div style="display: flex; flex-direction: column; gap: 12px; max-width: 46rem">
+      <span style="font: 500 11px/1 'IBM Plex Mono', monospace; letter-spacing: 0.12em; text-transform: uppercase; color: #7cc4e0">01 — Interactive teardown</span>
+      <h2 id="explorer-title" style="margin: 0; font-weight: 300; font-stretch: 112%; font-size: clamp(32px, 4vw, 54px); line-height: 1; letter-spacing: -0.02em">Take it apart.</h2>
+      <p style="margin: 0; font-size: 15.5px; line-height: 1.55; color: #b4bac0">Every part below comes from the original CAD file, placed where the author put it. Drag to orbit, select a part to read what it does, explode the stack along the motor axis, or cut it in half.</p>
+    </div>
+    <p style="margin: 0; max-width: 24rem; font: 400 11px/1.6 'IBM Plex Mono', monospace; color: #8b939b">Drag orbit · right-drag / shift pan · click to select · click the model, then scroll to zoom · keys: ← → ↑ ↓, + −, E explode, S section, R reset, Esc clear</p>
+  </div>
+
+  <div role="tablist" aria-label="Explorer mode" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px">
+    <sc-for list="{{tabs}}" as="t" hint-placeholder-count="5">
+      <button class="q-btn" role="tab" aria-selected="{{t.on}}" aria-pressed="{{t.on}}" onClick="{{t.go}}"><span style="color: #7cc4e0">{{t.n}}</span>{{t.label}}</button>
+    </sc-for>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: stretch">
+    <!-- viewer -->
+    <div style="flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column; border: 1px solid rgba(214,222,230,0.12); border-radius: 8px; overflow: hidden; background: radial-gradient(70% 60% at 50% 45%, #171c21 0%, #0f1215 70%)">
+      <div style="position: relative; height: clamp(440px, 58vw, 700px)">
+        <canvas ref="{{setCanvas}}" tabindex="0" onKeyDown="{{onKey}}" aria-label="Interactive 3D model of the actuator. Use arrow keys to orbit, plus and minus to zoom, E to explode, S for section, R to reset." style="position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab"></canvas>
+        <canvas ref="{{setOverlay}}" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none"></canvas>
+        <sc-if value="{{loading}}" hint-placeholder-val="{{ true }}">
+          <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font: 500 11px/1 'IBM Plex Mono', monospace; letter-spacing: 0.1em; text-transform: uppercase; color: #8b939b"><span class="pulse">{{loadMsg}}</span></div>
+        </sc-if>
+        <div style="position: absolute; left: 14px; top: 12px; display: flex; flex-direction: column; gap: 4px; pointer-events: none">
+          <span style="font: 500 10.5px/1 'IBM Plex Mono', monospace; letter-spacing: 0.1em; text-transform: uppercase; color: #7cc4e0">{{modeTitle}}</span>
+          <span style="font: 400 11px/1.45 'IBM Plex Mono', monospace; color: #9aa3ab; max-width: 30rem">{{modeHint}}</span>
+        </div>
+        <sc-if value="{{showHover}}" hint-placeholder-val="{{ false }}">
+          <div style="position: absolute; right: 14px; top: 12px; pointer-events: none; font: 500 11px/1 'IBM Plex Mono', monospace; color: #e8f4fa; background: rgba(13,15,17,0.85); border: 1px solid rgba(124,196,224,0.5); border-radius: 4px; padding: 8px 10px">{{hoverName}}</div>
+        </sc-if>
+        <sc-if value="{{isGear}}" hint-placeholder-val="{{ false }}">
+          <div ref="{{setReadout}}" aria-live="off" style="position: absolute; left: 14px; bottom: 12px; right: 14px; pointer-events: none; font: 500 11px/1.4 'IBM Plex Mono', monospace; color: #cfd5da; white-space: pre-wrap">INPUT (sun + rotor) 0.00 rev → OUTPUT (carrier) 0.00 rev</div>
+        </sc-if>
+      </div>
+      <!-- toolbar -->
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 12px; border-top: 1px solid rgba(214,222,230,0.10); background: #0e1114">
+        <div role="group" aria-label="Camera presets" style="display: flex; flex-wrap: wrap; gap: 6px">
+          <sc-for list="{{views}}" as="v" hint-placeholder-count="4">
+            <button class="q-btn" onClick="{{v.go}}">{{v.label}}</button>
+          </sc-for>
+        </div>
+        <span aria-hidden="true" style="width: 1px; height: 24px; background: rgba(214,222,230,0.14)"></span>
+        <sc-if value="{{isExplore}}" hint-placeholder-val="{{ true }}">
+          <div style="display: flex; align-items: center; gap: 10px; flex: 1 1 220px; min-width: 200px">
+            <label for="qdd-explode" style="font: 500 11px/1 'IBM Plex Mono', monospace; color: #9aa3ab; letter-spacing: 0.06em; text-transform: uppercase">Explode</label>
+            <input id="qdd-explode" ref="{{setSlider}}" class="q-range" type="range" min="0" max="100" step="1" onInput="{{onExplodeInput}}" aria-valuetext="Exploded view amount">
+          </div>
+          <button class="q-btn" onClick="{{toggleExplode}}" aria-pressed="{{exploded}}">{{explodeLabel}}</button>
+        </sc-if>
+        <sc-if value="{{isSeq}}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px">
+            <button class="q-btn" onClick="{{prevStage}}" aria-label="Previous stage">←</button>
+            <sc-for list="{{stageBtns}}" as="sb" hint-placeholder-count="6">
+              <button class="q-btn" aria-pressed="{{sb.on}}" onClick="{{sb.go}}" aria-label="{{sb.aria}}">{{sb.n}}</button>
+            </sc-for>
+            <button class="q-btn" onClick="{{nextStage}}" aria-label="Next stage">→</button>
+            <button class="q-btn" onClick="{{playSeq}}">{{seqPlayLabel}}</button>
+          </div>
+        </sc-if>
+        <sc-if value="{{isTorque}}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; flex-wrap: wrap; gap: 6px">
+            <sc-for list="{{tsteps}}" as="ts" hint-placeholder-count="5">
+              <button class="q-btn" aria-pressed="{{ts.on}}" onClick="{{ts.go}}"><span style="color: {{ts.col}}">{{ts.n}}</span>{{ts.short}}</button>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{isKin}}" hint-placeholder-val="{{ false }}">
+          <button class="q-btn" onClick="{{togglePlay}}" aria-pressed="{{playing}}">{{playLabel}}</button>
+        </sc-if>
+        <sc-if value="{{isGear}}" hint-placeholder-val="{{ false }}">
+          <button class="q-btn" onClick="{{toggleOpenTop}}" aria-pressed="{{openTop}}">Lid off</button>
+        </sc-if>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto">
+          <button class="q-btn" onClick="{{toggleSection}}" aria-pressed="{{section}}">Section</button>
+          <button class="q-btn" onClick="{{toggleLabels}}" aria-pressed="{{labels}}">Labels</button>
+          <button class="q-btn" onClick="{{reset}}">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- side panel -->
+    <aside aria-label="Components" style="flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+      <div style="border: 1px solid rgba(214,222,230,0.12); border-radius: 8px; background: #101316; padding: 18px; display: flex; flex-direction: column; gap: 12px">
+        <sc-if value="{{hasSel}}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; flex-direction: column; gap: 12px">
+            <div style="display: flex; justify-content: space-between; align-items: start; gap: 10px">
+              <div style="display: flex; flex-direction: column; gap: 6px">
+                <span style="font: 500 10.5px/1 'IBM Plex Mono', monospace; letter-spacing: 0.1em; text-transform: uppercase; color: #7cc4e0">{{info.cat}} · stage {{info.stage}}</span>
+                <h3 style="margin: 0; font: 600 21px/1.15 'Archivo', sans-serif; font-stretch: 108%">{{info.title}}</h3>
+                <span style="font: 400 12px/1.4 'IBM Plex Mono', monospace; color: #b4bac0">{{info.spec}}</span>
+              </div>
+              <button class="q-icon" onClick="{{clearSel}}" aria-label="Clear selection"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.5"></path></svg></button>
+            </div>
+            <dl style="margin: 0; display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: 10px 12px; font-size: 13.5px; line-height: 1.5">
+              <dt style="font: 500 10.5px/1.6 'IBM Plex Mono', monospace; letter-spacing: 0.06em; text-transform: uppercase; color: #8b939b">Function</dt><dd style="margin: 0; color: #d9dee2">{{info.fn}}</dd>
+              <dt style="font: 500 10.5px/1.6 'IBM Plex Mono', monospace; letter-spacing: 0.06em; text-transform: uppercase; color: #8b939b">Material</dt><dd style="margin: 0; color: #d9dee2">{{info.mat}}</dd>
+              <dt style="font: 500 10.5px/1.6 'IBM Plex Mono', monospace; letter-spacing: 0.06em; text-transform: uppercase; color: #8b939b">Why</dt><dd style="margin: 0; color: #d9dee2">{{info.why}}</dd>
+              <dt style="font: 500 10.5px/1.6 'IBM Plex Mono', monospace; letter-spacing: 0.06em; text-transform: uppercase; color: #8b939b">Sits</dt><dd style="margin: 0; color: #d9dee2">{{info.rel}}</dd>
+            </dl>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center">
+              <span style="font: 500 10px/1 'IBM Plex Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; color: #8b939b">Sources</span>
+              <sc-for list="{{info.src}}" as="sr" hint-placeholder-count="2">
+                <span style="font: 500 10px/1 'IBM Plex Mono', monospace; letter-spacing: 0.04em; padding: 5px 7px; border-radius: 3px; border: 1px solid rgba(214,222,230,0.2); color: #cfd5da">{{sr}}</span>
+              </sc-for>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px">
+              <button class="q-btn" onClick="{{isoSel}}" aria-pressed="{{selIsolated}}">Isolate</button>
+              <button class="q-btn" onClick="{{focusSel}}">Frame</button>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{noSel}}" hint-placeholder-val="{{ true }}">
+          <div style="display: flex; flex-direction: column; gap: 10px">
+            <span style="font: 500 10.5px/1 'IBM Plex Mono', monospace; letter-spacing: 0.1em; text-transform: uppercase; color: #7cc4e0">Component detail</span>
+            <p style="margin: 0; font-size: 14px; line-height: 1.55; color: #b4bac0">Click any part in the model or the list below. Each entry states what the part does, what it is made of and where the claim comes from: the article, the bill of materials, the repository, the CAD geometry itself, or our own inference.</p>
+            <p style="margin: 0; font: 400 11px/1.5 'IBM Plex Mono', monospace; color: #8b939b">Part names are ours: the display mesh carries no body names. The MKS XDrive Mini is a rebuilt model (Makerbase drawing + product photos), replacing the simplified board in the original CAD.</p>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="border: 1px solid rgba(214,222,230,0.12); border-radius: 8px; background: #101316; padding: 12px 10px; display: flex; flex-direction: column; gap: 4px; max-height: 560px; overflow-y: auto">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 8px 8px">
+          <span style="font: 500 10.5px/1 'IBM Plex Mono', monospace; letter-spacing: 0.1em; text-transform: uppercase; color: #9aa3ab">Parts · {{partCount}} groups</span>
+          <button class="q-btn" onClick="{{showAll}}" style="min-height: 28px; padding: 0 10px">Show all</button>
+        </div>
+        <sc-for list="{{cats}}" as="c" hint-placeholder-count="5">
+          <div style="display: flex; flex-direction: column; gap: 1px; padding-bottom: 8px">
+            <span style="font: 500 10px/1 'IBM Plex Mono', monospace; letter-spacing: 0.12em; text-transform: uppercase; color: #6f7880; padding: 10px 8px 6px">{{c.label}}</span>
+            <sc-for list="{{c.items}}" as="it" hint-placeholder-count="4">
+              <div style="display: flex; align-items: center; gap: 2px; border-radius: 5px; background: {{it.bg}}">
+                <button class="q-row" onClick="{{it.pick}}" onMouseEnter="{{it.enter}}" onMouseLeave="{{it.leave}}" aria-pressed="{{it.sel}}" style="opacity: {{it.op}}">
+                  <span aria-hidden="true" style="width: 9px; height: 9px; border-radius: 2px; flex: none; background: {{it.sw}}"></span>
+                  <span style="flex: 1; min-width: 0">{{it.name}}</span>
+                </button>
+                <button class="q-icon" onClick="{{it.eye}}" aria-label="{{it.eyeLabel}}" aria-pressed="{{it.vis}}">
+                  <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 8s2.4-4.5 6.5-4.5S14.5 8 14.5 8 12.1 12.5 8 12.5 1.5 8 1.5 8z" fill="none" stroke="currentColor" stroke-width="1.2"></path><circle cx="8" cy="8" r="{{it.pupil}}" fill="currentColor"></circle></svg>
+                </button>
+                <button class="q-icon" onClick="{{it.iso}}" aria-label="{{it.isoLabel}}" aria-pressed="{{it.isoOn}}" style="color: {{it.isoCol}}">
+                  <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.5" fill="none" stroke="currentColor" stroke-width="1.2"></circle><circle cx="8" cy="8" r="2" fill="currentColor"></circle></svg>
+                </button>
+              </div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+    </aside>
+  </div>
+  <p style="margin: 14px 0 0; font: 400 11px/1.6 'IBM Plex Mono', monospace; color: #8b939b; max-width: 70rem">Geometry: Fusion 360 display tessellation extracted from the shared .f3d file and decimated for the web (~420k triangles rendered). Gearbox and controller sub-assembly placement was reconstructed from the file’s scene graph and checked visually against the author’s preview render. The controller is not from the CAD: it was rebuilt from Makerbase’s dimension drawing and product photos, and its stock screw terminals are hidden by default (use the eye icon). Explode directions, part grouping and the build sequence are our interpretation, not the author’s documented procedure.</p>
+</section>
+
+<!-- ============================================================ 3 EXPLODED ASSEMBLY / STACK -->
+<section id="stack" aria-labelledby="stack-title" style="max-width: 1360px; margin: 0 auto; padding: 72px clamp(16px, 4vw, 40px)">
+  <div style="display: flex; flex-wrap: wrap; gap: 32px 56px">
+    <div style="flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+      <span style="font: 500 11px/1 'IBM Plex Mono', monospace; letter-spacing: 0.12em; text-transform: uppercase; color: #7cc4e0">02 — Exploded assembly</span>
+      <h2 id="stack-title" style="margin: 0; font-weight: 300; font-stretch: 112%; font-size: clamp(30px, 3.6vw, 48px); line-height: 1.02; letter-spacing: -0.02em">A pancake, built inside out.</h2>
+      <p style="margin: 0; font-size: 15.5px; line-height: 1.6; color: #b4bac0">It is an outrunner: the stator’s teeth point outward and the printed rotor wraps around them. The gearbox does not sit beside the motor — it lives inside the stator’s 78 mm bore, with the ring gear keyed into the stator yoke at mid-plane. The article describes the gearbox module running “through the center of the actuator” with the stator assembled into its clam-shell.</p>
+      <p style="margin: 0; font-size: 15.5px; line-height: 1.6; color: #b4bac0">The list runs along the motor axis from the output face down to the controller. Pick a layer to explode the model and frame it.</p>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px">
+        <a class="q-btn" href="#explorer" onClick="{{goSequence}}">Play the six-stage build →</a>
+      </div>
+      <dl style="margin: 10px 0 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: rgba(214,222,230,0.12); border: 1px solid rgba(214,222,230,0.12)">
+        <div style="background: #0b0d0f; padding: 14px"><dt style="font: 500 10px/1 'IBM Plex Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; color: #8b939b">Air gap</dt><dd style="margin: 8px 0 0; font: 300 24px/1 'Archivo', sans-serif">0.70 mm</dd><dd style="margin: 6px 0 0; font: 400 10.5px/1.4 'IBM Plex Mono', monospace; color: #8b939b">CAD: stator Ø100.0 → magnets Ø101.4 · article: 0.7 mm</dd></div>
+        <div style="background: #0b0d0f; padding: 14px"><dt style="font: 500 10px/1 'IBM Plex Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; color: #8b939b">Envelope</dt><dd style="margin: 8px 0 0; font: 300 24px/1 'Archivo', sans-serif">Ø121 × 57 mm</dd><dd style="margin: 6px 0 0; font: 400 10.5px/1.4 'IBM Plex Mono', monospace; color: #8b939b">Measured from the CAD body, incl. controller cover and centre bolt</dd></div>
+        <div style="background: #0b0d0f; padding: 14px"><dt style="font: 500 10px/1 'IBM Plex Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; color: #8b939b">Bodies in model</dt><dd style="margin: 8px 0 0; font: 300 24px/1 'Archivo', sans-serif">287 → 750</dd><dd style="margin: 6px 0 0; font: 400 10.5px/1.4 'IBM Plex Mono', monospace; color: #8b939b">Unique bodies → placed instances (fasteners, magnets, bearings repeat)</dd></div>
+        <div style="background: #0b0d0f; padding: 14px"><dt style="font: 500 10px/1 'IBM Plex Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; color: #8b939b">BOM lines</dt><dd style="margin: 8px 0 0; font: 300 24px/1 'Archivo', sans-serif">18</dd><dd style="margin: 6px 0 0; font: 400 10.5px/1.4 'IBM Plex Mono', monospace; color: #8b939b">Bought parts in BOM.xlsx; everything else is printed</dd></div>
+      </dl>
+    </div>
+    <ol aria-label="Axial stack, output face to controller" style="flex: 1.4 1 480px; min-width: 0; list-style: none; margin: 0; padding: 0; border-top: 1px solid rgba(214,222,230,0.14)">
+      <sc-for list="{{stack}}" as="st" hint-placeholder-count="10">
+        <li style="border-bottom: 1px solid rgba(214,222,230,0.10)">
+          <a href="#explorer" onClick="{{st.go}}" style="display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 14px 4px; color: #ecebe6; text-decoration: none">
+            <span style="font: 500 11px/1 'IBM Plex Mono', monospace; color: #6f7880">{{st.idx}}</span>
+            <span style="display: flex; flex-direction: column; gap: 5px; min-width: 0">
+              <span style="font: 500 16px/1.2 'Archivo', sans-serif">{{st.name}}</span>
+              <span style="font: 400 11.5px/1.45 'IBM Plex Mono', monospace; color: #9aa3ab">{{st.note}}</span>
+            </span>
+            <span style="display: flex; align-items: center; gap: 10px">
+              <span aria-hidden="true" style="width: {{st.bar}}; height: 6px; border-radius: 3px; background: {{st.col}}"></span>
+              <span style="font: 500 11px/1 'IBM Plex Mono', monospace; color: #7cc4e0">Show</span>
+            </span>
+          </a>
+        </li>
+      </sc-for>
+    </ol>
+  </div>
+</section>
+
+<!-- ============================================================ 4 MOTOR -->
+<section id="motor" aria-labelledby="motor-title" style="background: #0e1114; border-top: 1px solid rgba(214,222,230,0.08); border-bottom: 1px solid rgba(214,222,230,0.08)">
+  <div style="max-width: 1360px; margin: 0 auto; padding: 80px clamp(16px, 4vw, 40px)">
+    <div style="display: flex; flex-direction: column; gap: 14px; max-width: 50rem; margin-bottom: 36px">
+      <span style="font: 500 11px/1 'IBM Plex Mono', monospace; letter-spacing: 0.12em; text-transform: uppercase; color: #7cc4e0">03 — Inside the ironless motor</span>
+      <h2 id="motor-title" style="margin: 0; font-weight: 300; font-stretch: 112%; font-size: clamp(30px, 3.6vw, 48px); line-height: 1.02; letter-spacing: -0.02em">36 slots, 42 poles, no back-iron.</h2>
+      <p style="margin: 0; font-size: 15.5px; line-height: 1.6; color: #b4bac0">A conventional outrunner bonds its magnets to a steel ring that carries flux from pole to pole. Here the ring is printed plastic. Instead, 42 radially magnetised N52 blocks alternate with 42 thin N50 blocks magnetised sideways — a Halbach arrangement that pushes field toward the stator and cancels much of it on the outside.</p>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 28px">
+      <figure style="flex: 1.2 1 520px; min-width: 0; margin: 0; display: flex; flex-direction: column; gap: 12px">
+        <div style="position: relative; border: 1px solid rgba(214,222,230,0.12); border-radius: 8px; background: #0b0d0f; padding: 10px">
+          <svg viewBox="-60 -60 120 120" role="img" aria-label="Cross-section through the motor mid-plane: 36-tooth stator with copper coils inside, 84 magnets around it, separated by a 0.7 mm air gap" style="width: 100%; height: auto; display: block">
+            <defs>
+              <g id="qdd-motor-geo">
+                <path d="M56.5,0A56.5,56.5 0 1 0 -56.5,0A56.5,56.5 0 1 0 56.5,0ZM50.6,0A50.6,50.6 0 1 1 -50.6,0A50.6,50.6 0 1 1 50.6,0Z" fill="#262b31" fill-rule="evenodd"></path>
+                <path d="M-1.03,-49.99 3.08,-49.91 3.08,-48.91 1.57,-48.91 1.57,-40.97 5.56,-40.62 6.94,-48.44 5.46,-48.70 5.64,-49.68 7.67,-49.41 11.69,-48.61 11.52,-47.63 10.04,-47.89 8.67,-40.07 12.53,-39.04 15.25,-46.49 13.84,-47.01 14.18,-47.95 16.13,-47.33 19.96,-45.84 19.62,-44.90 18.21,-45.42 15.49,-37.96 19.12,-36.27 23.09,-43.14 21.79,-43.89 22.29,-44.76 25.88,-42.78 27.62,-41.68 27.12,-40.82 25.82,-41.57 21.85,-34.69 25.13,-32.40 30.23,-38.48 29.08,-39.44 29.72,-40.21 32.92,-37.63 34.43,-36.25 33.79,-35.49 32.64,-36.45 27.54,-30.37 30.37,-27.54 36.45,-32.64 35.49,-33.79 36.25,-34.43 38.95,-31.35 40.21,-29.72 39.44,-29.08 38.48,-30.23 32.40,-25.13 34.69,-21.85 41.57,-25.82 40.82,-27.12 41.68,-27.62 42.78,-25.88 44.76,-22.29 43.89,-21.79 43.14,-23.09 36.27,-19.12 37.96,-15.49 45.42,-18.21 44.90,-19.62 45.84,-19.96 47.33,-16.13 47.95,-14.18 47.01,-13.84 46.49,-15.25 39.04,-12.53 40.07,-8.67 47.89,-10.04 47.63,-11.52 48.61,-11.69 49.41,-7.67 49.68,-5.64 48.70,-5.46 48.44,-6.94 40.62,-5.56 40.97,-1.57 48.91,-1.57 48.91,-3.08 49.91,-3.08 49.99,-1.03 49.91,3.08 48.91,3.08 48.91,1.57 40.97,1.57 40.62,5.56 48.44,6.94 48.70,5.46 49.68,5.64 49.41,7.67 48.61,11.69 47.63,11.52 47.89,10.04 40.07,8.67 39.04,12.53 46.49,15.25 47.01,13.84 47.95,14.18 47.33,16.13 45.84,19.96 44.90,19.62 45.42,18.21 37.96,15.49 36.27,19.12 43.14,23.09 43.89,21.79 44.76,22.29 42.78,25.88 41.68,27.62 40.82,27.12 41.57,25.82 34.69,21.85 32.40,25.13 38.48,30.23 39.44,29.08 40.21,29.72 37.63,32.92 36.25,34.43 35.49,33.79 36.45,32.64 30.37,27.54 27.54,30.37 32.64,36.45 33.79,35.49 34.43,36.25 31.35,38.95 29.72,40.21 29.08,39.44 30.23,38.48 25.13,32.40 21.85,34.69 25.82,41.57 27.12,40.82 27.62,41.68 25.88,42.78 22.29,44.76 21.79,43.89 23.09,43.14 19.12,36.27 15.49,37.96 18.21,45.42 19.62,44.90 19.96,45.84 16.13,47.33 14.18,47.95 13.84,47.01 15.25,46.49 12.53,39.04 8.67,40.07 10.04,47.89 11.52,47.63 11.69,48.61 7.67,49.41 5.64,49.68 5.46,48.70 6.94,48.44 5.56,40.62 1.57,40.97 1.57,48.91 3.08,48.91 3.08,49.91 1.03,49.99 -3.08,49.91 -3.08,48.91 -1.57,48.91 -1.57,40.97 -5.56,40.62 -6.94,48.44 -5.46,48.70 -5.64,49.68 -7.67,49.41 -11.69,48.61 -11.52,47.63 -10.04,47.89 -8.67,40.07 -12.53,39.04 -15.25,46.49 -13.84,47.01 -14.18,47.95 -16.13,47.33 -19.96,45.84 -19.62,44.90 -18.21,45.42 -15.49,37.96 -19.12,36.27 -23.09,43.14 -21.79,43.89 -22.29,44.76 -25.88,42.78 -27.62,41.68 -27.12,40.82 -25.82,41.57 -21.85,34.69 -25.13,32.40 -30.23,38.48 -29.08,39.44 -29.72,40.21 -32.92,37.63 -34.43,36.25 -33.79,35.49 -32.64,36.45 -27.54,30.37 -30.37,27.54 -36.45,32.64 -35.49,33.79 -36.25,34.43 -38.95,31.35 -40.21,29.72 -39.44,29.08 -38.48,30.23 -32.40,25.13 -34.69,21.85 -41.57,25.82 -40.82,27.12 -41.68,27.62 -42.78,25.88 -44.76,22.29 -43.89,21.79 -43.14,23.09 -36.27,19.12 -37.96,15.49 -45.42,18.21 -44.90,19.62 -45.84,19.96 -47.33,16.13 -47.95,14.18 -47.01,13.84 -46.49,15.25 -39.04,12.53 -40.07,8.67 -47.89,10.04 -47.63,11.52 -48.61,11.69 -49.41,7.67 -49.68,5.64 -48.70,5.46 -48.44,6.94 -40.62,5.56 -40.97,1.57 -48.91,1.57 -48.91,3.08 -49.91,3.08 -49.99,1.03 -49.91,-3.08 -48.91,-3.08 -48.91,-1.57 -40.97,-1.57 -40.62,-5.56 -48.44,-6.94 -48.70,-5.46 -49.68,-5.64 -49.41,-7.67 -48.61,-11.69 -47.63,-11.52 -47.89,-10.04 -40.07,-8.67 -39.04,-12.53 -46.49,-15.25 -47.01,-13.84 -47.95,-14.18 -47.33,-16.13 -45.84,-19.96 -44.90,-19.62 -45.42,-18.21 -37.96,-15.49 -36.27,-19.12 -43.14,-23.09 -43.89,-21.79 -44.76,-22.29 -42.78,-25.88 -41.68,-27.62 -40.82,-27.12 -41.57,-25.82 -34.69,-21.85 -32.40,-25.13 -38.48,-30.23 -39.44,-29.08 -40.21,-29.72 -37.63,-32.92 -36.25,-34.43 -35.49,-33.79 -36.45,-32.64 -30.37,-27.54 -27.54,-30.37 -32.64,-36.45 -33.79,-35.49 -34.43,-36.25 -31.35,-38.95 -29.72,-40.21 -29.08,-39.44 -30.23,-38.48 -25.13,-32.40 -21.85,-34.69 -25.82,-41.57 -27.12,-40.82 -27.62,-41.68 -25.88,-42.78 -22.29,-44.76 -21.79,-43.89 -23.09,-43.14 -19.12,-36.27 -15.49,-37.96 -18.21,-45.42 -19.62,-44.90 -19.96,-45.84 -16.13,-47.33 -14.18,-47.95 -13.84,-47.01 -15.25,-46.49 -12.53,-39.04 -8.67,-40.07 -10.04,-47.89 -11.52,-47.63 -11.69,-48.61 -7.67,-49.41 -5.64,-49.68 -5.46,-48.70 -6.94,-48.44 -5.56,-40.62 -1.57,-40.97 -1.57,-48.91 -3.08,-48.91 -3.08,-49.91ZM0.33,-39.95 -0.33,-39.95 -0.62,-39.79 -0.84,-39.54 -1.00,-38.99 -5.54,-38.60 -10.00,-37.70 -14.33,-36.27 -18.46,-34.35 -22.34,-31.96 -25.92,-29.14 -29.14,-25.92 -31.96,-22.34 -34.35,-18.46 -36.27,-14.33 -37.70,-10.00 -38.60,-5.54 -38.99,-1.00 -39.54,-0.84 -39.79,-0.62 -39.95,-0.33 -40.00,-0.00 -39.95,0.33 -39.79,0.62 -39.54,0.84 -38.99,1.00 -38.60,5.54 -37.70,10.00 -36.27,14.33 -34.35,18.46 -31.96,22.34 -29.14,25.92 -25.92,29.14 -22.34,31.96 -18.46,34.35 -14.33,36.27 -10.00,37.70 -5.54,38.60 -1.00,38.99 -0.84,39.54 -0.62,39.79 -0.33,39.95 0.00,40.00 0.33,39.95 0.62,39.79 0.84,39.54 1.00,38.99 5.54,38.60 10.00,37.70 14.33,36.27 18.46,34.35 22.34,31.96 25.92,29.14 29.14,25.92 31.96,22.34 34.35,18.46 36.27,14.33 37.70,10.00 38.60,5.54 38.99,1.00 39.54,0.84 39.79,0.62 39.95,0.33 40.00,0.00 39.95,-0.33 39.79,-0.62 39.54,-0.84 38.99,-1.00 38.60,-5.54 37.70,-10.00 36.27,-14.33 34.35,-18.46 31.96,-22.34 29.14,-25.92 25.92,-29.14 22.34,-31.96 18.46,-34.35 14.33,-36.27 10.00,-37.70 5.54,-38.60 1.00,-38.99 0.84,-39.54 0.62,-39.79Z" fill="#4b5259" fill-rule="evenodd"></path>
+                <sc-for list="{{coils}}" as="cl" hint-placeholder-count="36">
+                  <path d="M-3.83,-48.91 -4.02,-48.71 -4.02,-46.16 -3.52,-41.16 -3.33,-40.96 -1.77,-40.96 -1.58,-41.16 -1.58,-48.71 -1.77,-48.91ZM1.77,-48.91 1.58,-48.71 1.58,-41.16 1.77,-40.96 3.33,-40.96 3.52,-41.16 4.02,-46.16 4.02,-48.71 3.83,-48.91Z" transform="{{cl.tr}}" fill="{{cl.fill}}" fill-opacity="{{cl.op}}"></path>
+                </sc-for>
+                <sc-for list="{{mains}}" as="mg" hint-placeholder-count="42">
+                  <g transform="{{mg.tr}}"><rect x="50.7" y="-2.6" width="3.35" height="5.2" rx="0.25" fill="{{mg.fill}}"></rect><path d="{{mg.arrow}}" fill="none" stroke="#0b0d0f" stroke-width="0.42" stroke-linecap="round" opacity="{{arrowOp}}"></path></g>
+                </sc-for>
+                <sc-for list="{{hals}}" as="hg" hint-placeholder-count="42">
+                  <g transform="{{hg.tr}}"><rect x="50.7" y="-0.85" width="3.6" height="1.7" rx="0.2" fill="{{hg.fill}}"></rect><path d="{{hg.arrow}}" fill="none" stroke="#0b0d0f" stroke-width="0.32" stroke-linecap="round" opacity="{{arrowOp}}"></path></g>
+                </sc-for>
+              </g>
+            </defs>
+            <circle r="59.4" fill="none" stroke="rgba(214,222,230,0.10)" stroke-width="0.25" stroke-dasharray="0.6 1.2"></circle>
+            <use href="#qdd-motor-geo"></use>
+            <sc-if value="{{mFlux}}" hint-placeholder-val="{{ false }}">
+              <g fill="none" stroke-linecap="round">
+                <sc-for list="{{fluxIn}}" as="fx" hint-placeholder-count="42">
+                  <path class="flux" d="{{fx}}" stroke="#7cc4e0" stroke-width="0.32" opacity="0.85"></path>
+                </sc-for>
+                <sc-for list="{{fluxOut}}" as="fo" hint-placeholder-count="42">
+                  <path d="{{fo}}" stroke="#7cc4e0" stroke-width="0.22" opacity="0.28"></path>
+                </sc-for>
+              </g>
+            </sc-if>
+            <g font-family="IBM Plex Mono, monospace" font-size="2.3" fill="#cfd5da">
+              <text x="0" y="-2" text-anchor="middle" fill="#9aa3ab">gearbox lives</text>
+              <text x="0" y="1.4" text-anchor="middle" fill="#9aa3ab">inside this bore</text>
+              <text x="0" y="5" text-anchor="middle" fill="#6f7880">Ø78 mm</text>
+            </g>
+            <rect x="-7.5" y="-57.2" width="15" height="9.2" fill="none" stroke="#ecebe6" stroke-width="0.25" stroke-dasharray="0.8 0.6"></rect>
+          </svg>
+          <!-- inset -->
+          <div style="position: absolute; right: 14px; bottom: 14px; width: clamp(150px, 30%, 230px); border: 1px solid rgba(236,235,230,0.5); border-radius: 4px; background: #0b0d0f; overflow: hidden">
+            <svg viewBox="-7.5 -57.2 15 9.2" role="img" aria-label="Zoomed detail of the 0.70 millimetre air gap between stator tooth tips and magnets" style="width: 100%; height: auto; display: block">
+              <use href="#qdd-motor-geo"></use>
+              <path d="M-7.5,-50 H7.5" stroke="#7cc4e0" stroke-width="0.05" stroke-dasharray="0.25 0.2"></path>
+              <path d="M-7.5,-50.7 H7.5" stroke="#7cc4e0" stroke-width="0.05" stroke-dasharray="0.25 0.2"></path>
+              <rect x="-6.6" y="-49.95" width="4.6" height="0.95" fill="#0b0d0f" opacity="0.8"></rect>
+              <text x="-6.4" y="-49.2" font-family="IBM Plex Mono, monospace" font-size="0.62" fill="#7cc4e0">gap 0.70 mm</text>
+            </svg>
+          </div>
+        </div>
+        <figcaption style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; font: 400 11px/1.5 'IBM Plex Mono', monospace; color: #8b939b">
+          <span>Stator and air gap: section of the CAD at the motor mid-plane. Magnets: drawn at their CAD angles and radii, simplified to rectangles. Rotor ring simplified.</span>
+        </figcaption>
+        <div role="group" aria-label="Cross-section layers" style="display: flex; flex-wrap: wrap; gap: 8px">
+          <button class="q-chip" aria-pressed="{{mArrows}}" onClick="{{tArrows}}">Magnetisation</button>
+          <button class="q-chip" aria-pressed="{{mPhase}}" onClick="{{tPhase}}">Phase colours</button>
+          <button class="q-chip" aria-pressed="{{mFlux}}" onClick="{{tFlux}}">Flux sketch</button>
+          <a class="q-chip" href="#explorer" onClick="{{goMotor}}">Open motor section in 3D →</a>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 14px 22px; font: 400 11px/1.4 'IBM Plex Mono', monospace; color: #b4bac0">
+          <span style="display: inline-flex; align-items: center; gap: 7px"><span style="width: 10px; height: 10px; background: #e59a5c; border-radius: 2px"></span>main pole, out</span>
+          <span style="display: inline-flex; align-items: center; gap: 7px"><span style="width: 10px; height: 10px; background: #6fb6d6; border-radius: 2px"></span>main pole, in</span>
+          <span style="display: inline-flex; align-items: center; gap: 7px"><span style="width: 10px; height: 10px; background: #f2c9a8; border-radius: 2px"></span><span style="width: 10px; height: 10px; background: #bfe0ee; border-radius: 2px; margin-left: -4px"></span>Halbach, tangential</span>
+          <sc-if value="{{mPhase}}" hint-placeholder-val="{{ true }}">
+            <span style="display: inline-flex; align-items: center; gap: 7px"><span style="width: 10px; height: 10px; background: #e08a52; border-radius: 2px"></span>A <span style="width: 10px; height: 10px; background: #5fa9cc; border-radius: 2px"></span>B <span style="width: 10px; height: 10px; background: #d8cfb8; border-radius: 2px"></span>C · faded = reverse-wound</span>
+          </sc-if>
+        </div>
+        <p style="margin: 0; font: 400 11px/1.6 'IBM Plex Mono', monospace; color: #8b939b">Phase layout follows the repository’s 36N42P winding scheme (AabBCcaABbcC ×3, winding factor 0.933, 252 cogging steps per turn). Its rotational alignment to the CAD is not documented and is shown illustratively. Magnet polarities are not stated in the sources; the inward-strong Halbach sequence shown is our inference from the design intent. The flux sketch is hand-drawn to show the idea — it is not an FEMM result.</p>
+      </figure>
+
+      <div style="flex: 1 1 400px; min-width: 0; display: flex; flex-direction: column; gap: 18px">
+        <h3 style="margin: 0; font: 600 18px/1.2 'Archivo', sans-serif; font-stretch: 108%">What the back-iron would have bought</h3>
+        <p style="margin: 0; font-size: 14.5px; line-height: 1.6; color: #b4bac0">The author simulated static torque in FEMM for four rotor variants (three phase pairs each, fixed angle) and kept the Halbach, ironless one. Select a variant.</p>
+        <div role="group" aria-label="Rotor configurations" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+          <sc-for list="{{cmpCells}}" as="cc" hint-placeholder-count="4">
+            <button class="q-cell" aria-pressed="{{cc.on}}" onClick="{{cc.go}}">
+              <svg viewBox="0 0 160 76" role="img" aria-label="{{cc.aria}}" style="width: 100%; height: auto; display: block">
+                <sc-if value="{{cc.iron}}" hint-placeholder-val="{{ false }}"><rect x="8" y="10" width="144" height="10" fill="#5d646b"></rect></sc-if>
+                <sc-for list="{{cc.mags}}" as="mm" hint-placeholder-count="8">
+                  <g><rect x="{{mm.x}}" y="21" width="16" height="16" fill="{{mm.fill}}"></rect><path d="{{mm.ar}}" fill="none" stroke="#0b0d0f" stroke-width="1.4" stroke-linecap="round"></path></g>
+                </sc-for>
+                <rect x="8" y="50" width="144" height="2" fill="#4b5259"></rect>
+                <sc-for list="{{cc.lines}}" as="ln" hint-placeholder-count="6">
+                  <path d="{{ln.d}}" fill="none" stroke="#7cc4e0" stroke-width="{{ln.w}}" opacity="{{ln.o}}"></path>
+                </sc-for>
+                <text x="8" y="70" font-family="IBM Plex Mono, monospace" font-size="7" fill="#8b939b">stator side</text>
+              </svg>
+              <span style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px; width: 100%">
+                <span style="font: 600 13px/1.2 'Archivo', sans-serif; color: #ecebe6; text-align: left">{{cc.name}}</span>
+                <span style="font: 500 12px/1 'IBM Plex Mono', monospace; color: {{cc.vcol}}">{{cc.val}}</span>
+              </span>
+            </button>
+          </sc-for>
+        </div>
+        <div style="border: 1px solid rgba(214,222,230,0.12); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 12px; background: #0b0d0f">
+          <div style="display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: baseline">
+            <span style="font: 600 13px/1.3 'Archivo', sans-serif">FEMM average static torque by rotor configuration</span>
+            <span style="font: 400 10.5px/1 'IBM Plex Mono', monospace; color: #8b939b">N·m · comparative only</span>
+          </div>
+          <div role="table" aria-label="FEMM average static torque" style="display: flex; flex-direction: column; gap: 10px">
+            <sc-for list="{{femm}}" as="fm" hint-placeholder-count="4">
+              <div role="row" title="{{fm.tip}}" style="display: grid; grid-template-columns: minmax(0, 150px) minmax(0, 1fr) 92px; gap: 10px; align-items: center">
+                <span role="cell" style="font: 400 12px/1.25 'IBM Plex Mono', monospace; color: {{fm.lcol}}">{{fm.name}}</span>
+                <span role="cell" style="height: 14px; background: rgba(214,222,230,0.06); border-radius: 0 4px 4px 0; overflow: hidden"><span style="display: block; height: 100%; width: {{fm.w}}; background: {{fm.col}}; border-radius: 0 4px 4px 0"></span></span>
+                <span role="cell" style="font: 500 12px/1 'IBM Plex Mono', monospace; color: #d9dee2; text-align: right">{{fm.v}} <span style="color: #8b939b">{{fm.p}}</span></span>
+              </div>
+            </sc-for>
+          </div>
+          <p style="margin: 0; font: 400 10.5px/1.5 'IBM Plex Mono', monospace; color: #8b939b">Source: article table. The author notes these torques “are not really representative of the actual torque of the actuator” and are only a point of comparison; he also invites feedback on the simulations.</p>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; padding: 16px; border-left: 2px solid #7cc4e0; background: rgba(124,196,224,0.05)">
+          <span style="font: 600 14px/1.3 'Archivo', sans-serif">{{cmpTitle}}</span>
+          <p style="margin: 0; font-size: 14px; line-height: 1.55; color: #c3c9ce">{{cmpBody}}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 5 GEARBOX -->
+<section id="gearbox" aria-labelledby="gear-title" style="max-width: 1360px; margin: 0 auto; padding: 80px clamp(16px, 4vw, 40px)">
+  <div style="display: flex; flex-wrap: wrap; gap: 32px 48px">
+    <div style="flex: 1 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+      <span style="font: 500 11px/1 'IBM Plex Mono', monospace; letter-spacing: 0.12em; text-transform: uppercase; color: #7cc4e0">04 — The 7:1 cycloidal planetary</span>
+      <h2 id="gear-title" style="margin: 0; font-weight: 300; font-stretch: 112%; font-size: clamp(30px, 3.6vw, 48px); line-height: 1.02; letter-spacing: -0.02em">Lobes, not teeth.</h2>
+      <p style="margin: 0; font-size: 15.5px; line-height: 1.6; color: #b4bac0">A standard planetary layout — sun in, ring fixed, carrier out — but every gear outline is a continuous wave of cycloidal lobes generated with the author’s modified version of Eelco Hoogendoorn’s pygeartrain.</p>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: rgba(214,222,230,0.12); border: 1px solid rgba(214,222,230,0.12)">
+        <div style="background: #0b0d0f; padding: 14px; display: flex; flex-direction: column; gap: 6px"><span style="font: 500 10px/1 'IBM Plex Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; color: #7cc4e0">Sun · input</span><span style="font: 300 30px/1 'Archivo', sans-serif">6</span><span style="font: 400 10.5px/1 'IBM Plex Mono', monospace; color: #8b939b">lobes</span></div>
+        <div style="background: #0b0d0f; padding: 14px; display: flex; flex-direction: column; gap: 6px"><span style="font: 500 10px/1 'IBM Plex Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; color: #cfd5da">Planet ×3</span><span style="font: 300 30px/1 'Archivo', sans-serif">15</span><span style="font: 400 10.5px/1 'IBM Plex Mono', monospace; color: #8b939b">lobes</span></div>
+        <div style="background: #0b0d0f; padding: 14px; display: flex; flex-direction: column; gap: 6px"><span style="font: 500 10px/1 'IBM Plex Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; color: #9aa3ab">Ring · fixed</span><span style="font: 300 30px/1 'Archivo', sans-serif">36</span><span style="font: 400 10.5px/1 'IBM Plex Mono', monospace; color: #8b939b">lobes</span></div>
+      </div>
+      <p style="margin: 0; font: 400 12px/1.6 'IBM Plex Mono', monospace; color: #b4bac0">ratio = 1 + Z<sub>ring</sub>/Z<sub>sun</sub> = 1 + 36/6 = <span style="color: #e59a5c">7 : 1</span><br>check: Z<sub>ring</sub> = Z<sub>sun</sub> + 2·Z<sub>planet</sub> = 6 + 30 ✓ · (6+36)/3 planets = 14 ✓</p>
+      <p style="margin: 0; font: 400 11px/1.6 'IBM Plex Mono', monospace; color: #8b939b">Lobe counts were measured from the CAD geometry (the article gives only the ratio). The ring is modelled as two halves with opposite helix hands, i.e. a double-helical (herringbone) set; the article shows the script can export helical and double-helical variants.</p>
+      <h3 style="margin: 12px 0 0; font: 600 17px/1.2 'Archivo', sans-serif; font-stretch: 108%">Why lobes suit a printer — the author’s reasoning</h3>
+      <ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px">
+        <sc-for list="{{gearWhy}}" as="gw" hint-placeholder-count="4">
+          <li style="display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 10px; font-size: 14.5px; line-height: 1.55; color: #c3c9ce"><span style="font: 500 11px/1.9 'IBM Plex Mono', monospace; color: #7cc4e0">{{gw.n}}</span><span>{{gw.t}}</span></li>
+        </sc-for>
+      </ul>
+      <p style="margin: 0; font: 400 11px/1.6 'IBM Plex Mono', monospace; color: #8b939b">“No backlash” and “no perceptible backlash” are the author’s statements from design intent and hand-feel after testing; no backlash measurement is published.</p>
+    </div>
+    <figure style="flex: 1.15 1 480px; min-width: 0; margin: 0; display: flex; flex-direction: column; gap: 12px">
+      <div style="border: 1px solid rgba(214,222,230,0.12); border-radius: 8px; background: radial-gradient(60% 60% at 50% 50%, #151a1f, #0b0d0f); padding: 18px">
+        <svg class="gears" data-paused="{{gearPaused}}" viewBox="-41 -41 82 82" role="img" aria-label="Animated mid-plane section of the gearbox: blue 6-lobe sun turns seven times for each turn of the orange planet carrier, while three 15-lobe planets roll inside the fixed 36-lobe ring" style="width: 100%; height: auto; display: block">
+          <path d="M-1.25,-38.98 -5.43,-38.62 -9.55,-37.81 -13.55,-36.57 -17.40,-34.90 -21.05,-32.83 -24.46,-30.38 -27.58,-27.58 -30.38,-24.46 -32.83,-21.05 -34.90,-17.40 -36.57,-13.55 -37.81,-9.55 -38.62,-5.43 -38.98,-1.25 -37.91,-1.24 -37.49,-1.14 -37.27,-1.01 -36.88,-0.55 -36.76,-0.13 -36.76,0.13 -36.97,0.70 -37.27,1.01 -37.49,1.14 -38.00,1.25 -38.98,1.25 -38.62,5.43 -37.81,9.55 -36.57,13.55 -34.90,17.40 -32.83,21.05 -30.38,24.46 -27.58,27.58 -24.46,30.38 -21.05,32.83 -17.40,34.90 -13.55,36.57 -9.55,37.81 -5.43,38.62 -1.25,38.98 -1.25,38.00 -1.17,37.57 -0.96,37.20 -0.62,36.92 -0.22,36.77 0.22,36.77 0.63,36.92 0.96,37.20 1.17,37.57 1.25,38.00 1.25,38.98 5.43,38.62 9.55,37.81 13.55,36.57 17.40,34.90 21.05,32.83 24.46,30.38 27.58,27.58 30.38,24.46 32.83,21.05 34.90,17.40 36.57,13.55 37.81,9.55 38.62,5.43 38.98,1.25 37.91,1.24 37.49,1.14 37.27,1.01 36.88,0.55 36.76,0.13 36.76,-0.13 36.97,-0.70 37.27,-1.01 37.49,-1.14 38.00,-1.25 38.98,-1.25 38.62,-5.43 37.81,-9.55 36.57,-13.55 34.90,-17.40 32.83,-21.05 30.38,-24.46 27.58,-27.58 24.46,-30.38 21.05,-32.83 17.40,-34.90 13.55,-36.57 9.55,-37.81 5.43,-38.62 1.25,-38.98 1.25,-38.00 1.17,-37.57 0.96,-37.20 0.63,-36.92 0.22,-36.77 -0.22,-36.77 -0.62,-36.92 -0.96,-37.20 -1.17,-37.57 -1.25,-38.00ZM-1.28,-34.98 -0.78,-34.97 -0.30,-34.84 0.28,-34.39 0.58,-33.71 0.78,-33.49 1.24,-33.20 1.91,-33.06 2.58,-33.16 2.89,-33.31 3.27,-33.65 3.45,-34.05 3.62,-34.25 4.07,-34.54 4.58,-34.66 5.11,-34.63 5.61,-34.45 6.03,-34.12 6.31,-33.67 6.40,-33.15 6.55,-32.88 6.77,-32.65 7.08,-32.43 7.61,-32.23 8.23,-32.20 8.80,-32.38 9.03,-32.53 9.35,-32.98 9.83,-33.26 10.37,-33.35 10.97,-33.24 11.50,-32.95 11.72,-32.75 12.02,-32.22 12.03,-31.67 12.32,-30.99 12.68,-30.65 13.12,-30.41 13.60,-30.29 14.10,-30.31 14.56,-30.49 14.91,-30.83 15.19,-30.98 15.50,-31.05 15.81,-31.06 16.42,-30.91 16.95,-30.56 17.30,-30.09 17.44,-29.57 17.35,-29.04 17.45,-28.51 17.80,-27.99 18.07,-27.75 18.72,-27.45 19.08,-27.40 19.44,-27.43 20.05,-27.78 20.52,-27.89 21.00,-27.84 21.44,-27.65 21.82,-27.36 22.11,-26.97 22.29,-26.53 22.30,-26.05 22.13,-25.60 22.11,-25.32 22.14,-25.04 22.36,-24.52 22.72,-24.09 23.20,-23.79 23.59,-23.66 24.00,-23.65 24.76,-23.91 25.17,-23.88 25.56,-23.75 26.19,-23.23 26.42,-22.84 26.54,-22.40 26.53,-21.95 26.47,-21.73 26.23,-21.35 26.17,-21.04 26.17,-20.68 26.29,-20.24 26.51,-19.85 26.79,-19.54 27.50,-19.16 27.91,-19.12 28.30,-19.24 28.71,-19.22 29.09,-19.08 29.63,-18.62 29.93,-18.08 30.03,-17.47 29.88,-16.87 29.58,-16.53 29.40,-16.11 29.38,-15.49 29.57,-14.91 29.94,-14.41 30.45,-14.08 30.90,-13.98 31.36,-14.02 31.92,-13.77 32.15,-13.56 32.49,-13.04 32.63,-12.45 32.57,-11.84 32.36,-11.43 32.01,-11.15 31.83,-10.92 31.64,-10.37 31.65,-9.78 31.84,-9.23 32.19,-8.76 32.69,-8.45 33.27,-8.38 33.76,-8.08 34.00,-7.80 34.17,-7.48 34.31,-6.78 34.17,-6.08 33.98,-5.77 33.24,-5.23 32.97,-4.73 32.87,-4.17 32.95,-3.61 33.19,-3.09 33.37,-2.87 33.59,-2.69 34.37,-2.38 34.58,-2.18 34.84,-1.76 34.98,-1.28 34.97,-0.78 34.84,-0.30 34.57,0.11 34.39,0.28 33.71,0.58 33.49,0.78 33.20,1.24 33.10,1.57 33.08,2.25 33.31,2.89 33.65,3.27 34.09,3.48 34.32,3.70 34.49,3.96 34.66,4.57 34.61,5.19 34.51,5.49 34.22,5.94 33.80,6.26 33.28,6.35 32.81,6.60 32.47,7.01 32.26,7.49 32.19,8.02 32.27,8.54 32.38,8.80 32.53,9.03 32.98,9.35 33.26,9.83 33.35,10.37 33.24,10.97 32.99,11.45 32.75,11.72 32.22,12.02 31.67,12.03 30.99,12.32 30.65,12.68 30.41,13.12 30.29,13.60 30.31,14.10 30.49,14.56 30.83,14.91 30.98,15.19 31.05,15.50 31.06,15.81 30.93,16.36 30.56,16.95 30.09,17.30 29.57,17.44 29.04,17.35 28.51,17.45 27.99,17.80 27.75,18.07 27.45,18.72 27.40,19.08 27.43,19.44 27.78,20.05 27.89,20.52 27.84,21.00 27.65,21.44 27.36,21.82 26.97,22.11 26.53,22.29 26.05,22.30 25.60,22.13 25.32,22.11 25.04,22.14 24.52,22.36 24.09,22.72 23.79,23.20 23.66,23.59 23.65,24.00 23.91,24.76 23.88,25.17 23.75,25.56 23.23,26.19 22.84,26.42 22.40,26.54 21.95,26.53 21.13,26.17 20.68,26.17 20.24,26.29 19.85,26.51 19.54,26.79 19.31,27.12 19.16,27.50 19.12,27.91 19.24,28.30 19.22,28.71 19.08,29.09 18.62,29.63 18.08,29.93 17.47,30.03 16.87,29.88 16.53,29.58 16.11,29.40 15.49,29.38 14.91,29.57 14.41,29.94 14.08,30.45 13.98,30.90 14.02,31.36 13.77,31.92 13.56,32.15 13.04,32.49 12.45,32.63 11.84,32.57 11.43,32.36 11.15,32.01 10.92,31.83 10.37,31.64 9.78,31.65 9.23,31.84 8.76,32.19 8.45,32.69 8.38,33.27 8.08,33.76 7.80,34.00 7.48,34.17 6.78,34.31 6.08,34.17 5.77,33.98 5.23,33.24 4.73,32.97 4.17,32.87 3.61,32.95 3.09,33.19 2.87,33.37 2.69,33.59 2.52,34.12 2.18,34.58 1.76,34.84 1.28,34.98 0.78,34.97 0.30,34.84 -0.28,34.39 -0.58,33.71 -0.74,33.52 -1.24,33.20 -1.91,33.06 -2.58,33.16 -2.89,33.31 -3.27,33.65 -3.45,34.05 -3.62,34.25 -4.07,34.54 -4.58,34.66 -5.11,34.63 -5.61,34.45 -6.03,34.12 -6.31,33.67 -6.40,33.15 -6.55,32.88 -6.77,32.65 -7.02,32.46 -7.61,32.23 -8.23,32.20 -8.80,32.38 -9.03,32.53 -9.35,32.98 -9.83,33.26 -10.37,33.35 -10.97,33.24 -11.45,32.99 -11.72,32.75 -12.02,32.22 -12.03,31.67 -12.32,30.99 -12.68,30.65 -13.12,30.41 -13.60,30.29 -14.10,30.31 -14.56,30.49 -14.91,30.83 -15.19,30.98 -15.50,31.05 -15.81,31.06 -16.36,30.93 -16.95,30.56 -17.30,30.09 -17.44,29.57 -17.35,29.04 -17.45,28.51 -17.80,27.99 -18.07,27.75 -18.72,27.45 -19.08,27.40 -19.44,27.43 -20.05,27.78 -20.52,27.89 -21.00,27.84 -21.44,27.65 -21.82,27.36 -22.11,26.97 -22.29,26.53 -22.30,26.05 -22.13,25.60 -22.11,25.32 -22.14,25.04 -22.36,24.52 -22.72,24.09 -23.20,23.79 -23.59,23.66 -24.00,23.65 -24.76,23.91 -25.17,23.88 -25.56,23.75 -26.19,23.23 -26.42,22.84 -26.54,22.40 -26.53,21.95 -26.17,21.13 -26.17,20.68 -26.29,20.24 -26.51,19.85 -26.79,19.54 -27.12,19.31 -27.50,19.16 -27.91,19.12 -28.30,19.24 -28.71,19.22 -29.09,19.08 -29.63,18.62 -29.93,18.08 -30.03,17.47 -29.88,16.87 -29.58,16.53 -29.40,16.11 -29.38,15.49 -29.57,14.91 -29.94,14.41 -30.45,14.08 -30.90,13.98 -31.36,14.02 -31.92,13.77 -32.15,13.56 -32.49,13.04 -32.63,12.45 -32.57,11.84 -32.36,11.43 -32.01,11.15 -31.83,10.92 -31.64,10.37 -31.65,9.78 -31.84,9.23 -32.19,8.76 -32.69,8.45 -33.27,8.38 -33.76,8.08 -34.00,7.80 -34.17,7.48 -34.31,6.78 -34.17,6.08 -33.98,5.77 -33.24,5.23 -32.97,4.73 -32.87,4.17 -32.95,3.61 -33.19,3.09 -33.37,2.87 -33.59,2.69 -34.12,2.52 -34.58,2.18 -34.84,1.76 -34.98,1.28 -34.97,0.78 -34.84,0.30 -34.39,-0.28 -33.71,-0.58 -33.52,-0.74 -33.18,-1.29 -33.08,-1.66 -33.06,-2.06 -33.26,-2.81 -33.49,-3.13 -34.16,-3.53 -34.48,-3.95 -34.65,-4.45 -34.65,-4.98 -34.39,-5.69 -34.02,-6.12 -33.80,-6.26 -33.28,-6.35 -32.81,-6.60 -32.47,-7.01 -32.26,-7.49 -32.19,-8.02 -32.27,-8.54 -32.38,-8.80 -32.53,-9.03 -32.98,-9.35 -33.26,-9.83 -33.35,-10.37 -33.24,-10.97 -32.95,-11.50 -32.75,-11.72 -32.22,-12.02 -31.67,-12.03 -30.99,-12.32 -30.65,-12.68 -30.41,-13.12 -30.29,-13.60 -30.31,-14.10 -30.49,-14.56 -30.83,-14.91 -30.98,-15.19 -31.05,-15.50 -31.06,-15.81 -30.91,-16.42 -30.56,-16.95 -30.09,-17.30 -29.57,-17.44 -29.04,-17.35 -28.51,-17.45 -27.99,-17.80 -27.75,-18.07 -27.45,-18.72 -27.40,-19.08 -27.43,-19.44 -27.78,-20.05 -27.89,-20.52 -27.84,-21.00 -27.65,-21.44 -27.36,-21.82 -26.97,-22.11 -26.53,-22.29 -26.05,-22.30 -25.60,-22.13 -25.32,-22.11 -25.04,-22.14 -24.52,-22.36 -24.09,-22.72 -23.79,-23.20 -23.66,-23.59 -23.65,-24.00 -23.91,-24.76 -23.88,-25.17 -23.75,-25.56 -23.23,-26.19 -22.84,-26.42 -22.40,-26.54 -21.95,-26.53 -21.73,-26.47 -21.35,-26.23 -21.04,-26.17 -20.68,-26.17 -20.24,-26.29 -19.85,-26.51 -19.54,-26.79 -19.16,-27.50 -19.12,-27.91 -19.24,-28.30 -19.22,-28.71 -19.08,-29.09 -18.62,-29.63 -18.08,-29.93 -17.47,-30.03 -16.87,-29.88 -16.53,-29.58 -16.11,-29.40 -15.49,-29.38 -14.91,-29.57 -14.41,-29.94 -14.08,-30.45 -13.98,-30.90 -14.02,-31.36 -13.77,-31.92 -13.56,-32.15 -13.04,-32.49 -12.45,-32.63 -11.84,-32.57 -11.43,-32.36 -11.15,-32.01 -10.92,-31.83 -10.37,-31.64 -9.78,-31.65 -9.23,-31.84 -8.76,-32.19 -8.45,-32.69 -8.38,-33.27 -8.08,-33.76 -7.80,-34.00 -7.48,-34.17 -6.78,-34.31 -6.08,-34.17 -5.77,-33.98 -5.23,-33.24 -4.73,-32.97 -4.17,-32.87 -3.61,-32.95 -3.09,-33.19 -2.87,-33.37 -2.69,-33.59 -2.38,-34.37 -2.18,-34.58 -1.76,-34.84Z" fill="#3a4047" fill-rule="evenodd" stroke="#59616a" stroke-width="0.12"></path>
+          <g class="g-anim g-carrier">
+            <circle r="39.5" fill="none" stroke="none"></circle>
+            <path d="M-1.18,-24.97 1.73,-24.94 4.61,-24.57 7.43,-23.87 10.15,-22.85 12.74,-21.51 15.15,-19.89 17.35,-17.99 19.33,-15.86 21.04,-13.51 22.46,-10.97 23.58,-8.29 24.39,-5.50 24.86,-2.63 25.00,0.27 24.80,3.18 24.26,6.03 23.40,8.81 22.22,11.46 20.73,13.97 18.97,16.28 16.96,18.37 14.71,20.22 12.26,21.79 9.65,23.06 6.91,24.03 4.07,24.67 1.18,24.97 -1.73,24.94 -4.61,24.57 -7.43,23.87 -10.15,22.85 -12.74,21.51 -15.15,19.89 -17.35,17.99 -19.33,15.86 -21.04,13.51 -22.46,10.97 -23.58,8.29 -24.39,5.50 -24.86,2.63 -25.00,-0.27 -24.80,-3.18 -24.26,-6.03 -23.40,-8.81 -22.22,-11.46 -20.73,-13.97 -18.97,-16.28 -16.96,-18.37 -14.71,-20.22 -12.26,-21.79 -9.65,-23.06 -6.91,-24.03 -4.07,-24.67ZM-0.99,-18.47 1.48,-18.44 3.93,-18.08 6.31,-17.39 8.57,-16.39 10.68,-15.10 12.60,-13.54 14.30,-11.74 15.74,-9.73 16.89,-7.54 17.75,-5.22 18.29,-2.80 18.46,-0.96 18.42,1.63 17.33,6.47 16.31,8.72 15.00,10.82 13.42,12.72 11.60,14.40 9.57,15.82 7.38,16.96 5.05,17.79 2.63,18.31 -2.31,18.35 -4.74,17.88 -7.73,16.80 -9.37,15.94 -11.98,14.09 -13.75,12.37 -15.28,10.42 -16.54,8.29 -17.49,6.01 -18.14,3.62 -18.46,1.17 -18.45,-1.31 -18.11,-3.76 -17.45,-6.14 -16.47,-8.42 -15.20,-10.54 -13.66,-12.47 -11.87,-14.19 -10.38,-15.31 -8.14,-16.61 -5.85,-17.55 -3.45,-18.17Z" fill="rgba(229,154,92,0.16)" fill-rule="evenodd" stroke="#e59a5c" stroke-width="0.3"></path>
+            <path d="M0,-25.8 L1.4,-27.9 L-1.4,-27.9Z" fill="#e59a5c"></path>
+            <g transform="translate(19.853 -0.937)">
+              <g class="g-anim g-planet">
+                <circle r="15.3" fill="none" stroke="none"></circle>
+                <path d="M-1.24,-14.97 -0.80,-14.94 -0.39,-14.79 -0.04,-14.53 0.09,-14.36 0.28,-13.83 0.53,-13.53 0.84,-13.29 1.19,-13.13 1.57,-13.04 2.26,-13.05 2.84,-13.28 3.21,-13.60 3.42,-13.95 3.69,-14.14 4.01,-14.25 4.34,-14.29 4.67,-14.26 4.97,-14.17 5.50,-13.83 5.71,-13.60 5.90,-13.17 5.92,-12.93 5.87,-12.63 5.93,-12.29 6.07,-11.97 6.26,-11.68 6.51,-11.43 6.88,-11.19 7.29,-11.02 7.73,-10.96 8.17,-11.01 8.51,-11.16 8.79,-11.35 9.24,-11.42 9.68,-11.33 10.07,-11.12 10.40,-10.82 10.64,-10.44 10.76,-10.01 10.74,-9.56 10.51,-9.17 10.42,-8.83 10.41,-8.47 10.47,-8.12 10.60,-7.78 10.79,-7.48 11.02,-7.21 11.30,-6.99 11.62,-6.82 12.22,-6.72 12.62,-6.80 12.96,-6.73 13.26,-6.57 13.60,-6.23 13.86,-5.77 13.96,-5.30 13.90,-4.77 13.69,-4.36 13.31,-4.08 12.98,-3.57 12.86,-2.99 12.90,-2.46 13.07,-1.97 13.37,-1.53 13.79,-1.21 14.29,-1.08 14.60,-0.85 14.89,-0.38 14.97,-0.17 15.02,0.22 14.96,0.67 14.79,1.10 14.65,1.28 14.30,1.58 13.87,1.67 13.54,1.83 13.26,2.07 13.04,2.36 12.87,2.69 12.77,3.05 12.77,3.78 12.87,4.13 13.18,4.59 13.50,4.83 13.70,5.20 13.77,5.61 13.72,6.03 13.58,6.42 13.34,6.76 13.03,7.04 12.65,7.22 12.45,7.25 11.92,7.16 11.56,7.19 11.22,7.31 10.91,7.49 10.64,7.72 10.41,8.01 10.12,8.66 10.08,9.02 10.15,9.50 10.37,9.93 10.39,10.35 10.28,10.76 10.06,11.12 9.75,11.42 9.39,11.63 8.98,11.74 8.55,11.73 8.26,11.61 7.90,11.36 7.60,11.27 7.29,11.24 6.66,11.35 6.15,11.62 5.74,12.02 5.48,12.48 5.42,12.73 5.43,13.33 5.33,13.61 5.15,13.87 4.93,14.08 4.39,14.36 3.96,14.43 3.49,14.39 3.08,14.22 2.91,14.07 2.61,13.59 2.26,13.32 1.85,13.15 1.41,13.08 0.97,13.10 0.54,13.22 0.16,13.43 -0.14,13.71 -0.26,13.88 -0.46,14.38 -0.76,14.67 -1.14,14.85 -1.55,14.92 -2.14,14.83 -2.37,14.75 -2.72,14.53 -2.99,14.21 -3.08,14.01 -3.15,13.48 -3.32,13.14 -3.56,12.85 -3.86,12.62 -4.25,12.42 -4.86,12.30 -5.36,12.35 -5.92,12.61 -6.31,12.97 -6.75,13.10 -7.22,13.08 -7.66,12.92 -8.04,12.65 -8.26,12.39 -8.42,12.09 -8.51,11.59 -8.37,11.12 -8.37,10.67 -8.57,10.13 -8.73,9.85 -9.04,9.53 -9.41,9.28 -9.83,9.12 -10.28,9.07 -10.50,9.10 -11.03,9.29 -11.41,9.25 -11.76,9.10 -12.07,8.88 -12.32,8.59 -12.52,8.21 -12.61,7.79 -12.58,7.36 -12.51,7.16 -12.16,6.73 -11.99,6.36 -11.94,5.85 -11.96,5.55 -12.08,5.16 -12.26,4.80 -12.52,4.49 -12.83,4.23 -13.21,4.07 -13.78,4.02 -14.00,3.93 -14.36,3.65 -14.61,3.26 -14.75,2.82 -14.77,2.36 -14.66,1.91 -14.41,1.52 -14.23,1.37 -13.81,1.18 -13.63,1.03 -13.36,0.66 -13.19,0.22 -13.13,-0.23 -13.17,-0.69 -13.32,-1.13 -13.57,-1.52 -13.74,-1.68 -14.14,-1.88 -14.31,-2.02 -14.51,-2.30 -14.63,-2.63 -14.68,-2.97 -14.65,-3.32 -14.50,-3.77 -14.23,-4.16 -14.05,-4.32 -13.63,-4.52 -13.12,-4.54 -12.58,-4.76 -12.25,-5.04 -11.99,-5.38 -11.81,-5.78 -11.72,-6.20 -11.72,-6.63 -11.91,-7.19 -12.23,-7.59 -12.32,-7.99 -12.29,-8.40 -12.15,-8.79 -11.92,-9.13 -11.62,-9.41 -11.26,-9.60 -10.86,-9.69 -10.65,-9.68 -10.03,-9.46 -9.57,-9.46 -9.13,-9.60 -8.73,-9.83 -8.39,-10.15 -8.14,-10.53 -7.99,-10.96 -7.98,-11.42 -8.05,-11.75 -8.06,-12.09 -7.95,-12.44 -7.74,-12.76 -7.47,-13.01 -7.15,-13.20 -6.80,-13.32 -6.43,-13.35 -6.06,-13.29 -5.74,-13.12 -5.32,-12.74 -4.99,-12.58 -4.53,-12.50 -3.92,-12.55 -3.49,-12.72 -2.99,-13.08 -2.69,-13.53 -2.50,-14.23 -2.23,-14.57 -1.67,-14.89ZM-0.08,-7.00 1.16,-6.90 2.20,-6.64 3.19,-6.23 4.11,-5.67 4.79,-5.10 5.62,-4.16 6.11,-3.41 6.56,-2.44 6.85,-1.41 7.00,-0.17 6.94,0.90 6.77,1.78 6.42,2.79 5.92,3.74 5.16,4.73 4.51,5.35 3.64,5.97 2.69,6.46 1.67,6.79 0.44,6.98 -0.46,6.98 -1.52,6.83 -2.54,6.52 -3.51,6.06 -4.53,5.34 -5.29,4.58 -5.83,3.87 -6.42,2.77 -6.77,1.76 -6.94,0.88 -6.99,-0.19 -6.85,-1.43 -6.55,-2.46 -6.10,-3.43 -5.50,-4.32 -4.91,-4.99 -3.95,-5.78 -3.02,-6.31 -2.02,-6.70 -0.97,-6.93Z" fill="#6b737c" fill-rule="evenodd" stroke="#8a939c" stroke-width="0.12"></path>
+                <circle r="6.6" fill="none" stroke="#c4c9ce" stroke-width="1.1"></circle>
+                <circle r="4.1" fill="none" stroke="#9aa3ab" stroke-width="0.6"></circle>
+                <circle cx="0" cy="-10.5" r="0.7" fill="#0b0d0f"></circle>
+              </g>
+              <circle r="2.5" fill="#e59a5c"></circle>
+            </g>
+            <g transform="translate(-9.115 17.662)">
+              <g class="g-anim g-planet">
+                <circle r="15.3" fill="none" stroke="none"></circle>
+                <path d="M-1.28,-14.96 -0.85,-14.94 -0.44,-14.82 -0.09,-14.58 0.11,-14.32 0.25,-13.89 0.49,-13.57 0.91,-13.26 1.17,-13.14 1.57,-13.04 1.97,-13.02 2.37,-13.08 2.75,-13.23 3.08,-13.47 3.41,-13.94 3.80,-14.19 4.02,-14.26 4.49,-14.29 4.94,-14.19 5.34,-13.97 5.68,-13.65 5.80,-13.45 5.93,-13.01 5.88,-12.55 6.11,-11.90 6.40,-11.54 6.77,-11.25 7.19,-11.06 7.64,-10.97 8.10,-11.00 8.32,-11.06 8.90,-11.39 9.25,-11.42 9.59,-11.36 10.20,-11.03 10.51,-10.67 10.71,-10.25 10.76,-10.01 10.73,-9.54 10.49,-9.09 10.41,-8.51 10.49,-8.09 10.66,-7.69 10.91,-7.34 11.22,-7.05 11.60,-6.84 12.18,-6.72 12.68,-6.79 13.08,-6.68 13.42,-6.44 13.68,-6.13 13.87,-5.76 13.96,-5.36 13.95,-4.95 13.82,-4.56 13.71,-4.39 13.21,-3.96 12.98,-3.55 12.87,-3.10 12.88,-2.64 12.98,-2.19 13.19,-1.78 13.49,-1.44 13.88,-1.20 14.20,-1.10 14.50,-0.94 14.75,-0.66 14.92,-0.33 15.00,0.04 15.01,0.41 14.93,0.77 14.78,1.11 14.54,1.40 14.23,1.59 13.69,1.76 13.38,1.97 13.09,2.32 12.83,2.88 12.76,3.34 12.82,3.95 13.06,4.43 13.58,4.95 13.74,5.35 13.73,6.00 13.58,6.41 13.34,6.77 13.01,7.06 12.60,7.23 12.39,7.26 11.84,7.16 11.45,7.22 11.09,7.37 10.77,7.60 10.50,7.88 10.17,8.48 10.08,9.10 10.18,9.58 10.37,9.93 10.40,10.27 10.34,10.60 10.21,10.90 9.78,11.39 9.23,11.68 8.92,11.74 8.45,11.70 8.00,11.40 7.68,11.28 7.33,11.24 6.98,11.26 6.25,11.55 5.90,11.83 5.63,12.17 5.45,12.58 5.40,12.95 5.44,13.29 5.27,13.71 4.97,14.04 4.60,14.28 4.17,14.42 3.72,14.43 3.29,14.32 2.91,14.08 2.69,13.69 2.43,13.43 2.13,13.25 1.79,13.13 1.08,13.08 0.73,13.15 0.40,13.28 0.10,13.47 -0.18,13.77 -0.29,13.94 -0.43,14.33 -0.65,14.58 -1.08,14.81 -1.60,14.92 -2.26,14.80 -2.56,14.64 -2.82,14.43 -3.07,14.03 -3.12,13.56 -3.23,13.28 -3.40,13.03 -3.84,12.63 -4.32,12.40 -4.83,12.30 -5.36,12.34 -5.84,12.55 -6.21,12.91 -6.57,13.07 -7.12,13.08 -7.34,13.04 -7.70,12.89 -8.06,12.62 -8.34,12.26 -8.44,12.05 -8.51,11.60 -8.38,11.18 -8.35,10.81 -8.42,10.45 -8.77,9.80 -9.03,9.54 -9.33,9.32 -9.66,9.17 -10.02,9.08 -10.39,9.08 -10.93,9.27 -11.14,9.29 -11.35,9.26 -11.74,9.11 -12.08,8.87 -12.43,8.39 -12.53,8.17 -12.61,7.77 -12.58,7.35 -12.51,7.15 -12.16,6.75 -12.01,6.42 -11.94,6.07 -11.94,5.71 -12.01,5.35 -12.14,5.01 -12.56,4.44 -12.85,4.22 -13.30,4.04 -13.79,4.02 -14.06,3.89 -14.29,3.70 -14.46,3.52 -14.66,3.15 -14.76,2.74 -14.76,2.31 -14.66,1.90 -14.43,1.54 -14.18,1.35 -13.79,1.17 -13.56,0.95 -13.38,0.69 -13.16,0.10 -13.14,-0.48 -13.28,-1.04 -13.55,-1.49 -13.74,-1.67 -14.26,-1.96 -14.45,-2.19 -14.59,-2.47 -14.66,-2.77 -14.63,-3.38 -14.48,-3.78 -14.21,-4.18 -13.85,-4.44 -13.64,-4.52 -13.08,-4.54 -12.66,-4.70 -12.31,-4.97 -12.03,-5.31 -11.83,-5.71 -11.72,-6.14 -11.71,-6.58 -11.81,-6.98 -11.89,-7.16 -12.22,-7.59 -12.32,-7.99 -12.29,-8.41 -12.23,-8.58 -12.14,-8.80 -11.90,-9.15 -11.59,-9.43 -11.22,-9.62 -10.81,-9.69 -10.60,-9.67 -10.10,-9.47 -9.72,-9.44 -9.35,-9.51 -9.00,-9.65 -8.63,-9.89 -8.22,-10.36 -8.01,-10.82 -7.96,-11.44 -8.08,-11.95 -7.97,-12.40 -7.71,-12.79 -7.36,-13.09 -6.94,-13.28 -6.60,-13.35 -6.26,-13.34 -5.78,-13.17 -5.44,-12.81 -5.06,-12.59 -4.49,-12.48 -4.17,-12.49 -3.73,-12.59 -3.33,-12.79 -2.98,-13.07 -2.72,-13.44 -2.63,-13.65 -2.53,-14.19 -2.31,-14.51 -2.00,-14.74 -1.65,-14.89ZM-0.26,-6.99 -1.32,-6.87 -2.52,-6.53 -3.49,-6.06 -4.24,-5.57 -5.04,-4.86 -5.82,-3.89 -6.34,-2.95 -6.67,-2.12 -6.91,-1.08 -7.00,-0.01 -6.89,1.24 -6.62,2.27 -6.19,3.26 -5.73,4.02 -4.92,4.97 -4.11,5.67 -3.35,6.14 -2.37,6.58 -1.34,6.87 -0.10,7.00 0.97,6.93 1.85,6.75 2.85,6.39 3.80,5.88 4.78,5.11 5.39,4.46 6.01,3.58 6.49,2.62 6.85,1.43 6.99,0.37 6.98,-0.53 6.82,-1.59 6.49,-2.61 5.93,-3.72 5.40,-4.45 4.66,-5.22 3.81,-5.87 2.71,-6.45 1.69,-6.79 0.81,-6.95Z" fill="#6b737c" fill-rule="evenodd" stroke="#8a939c" stroke-width="0.12"></path>
+                <circle r="6.6" fill="none" stroke="#c4c9ce" stroke-width="1.1"></circle>
+                <circle r="4.1" fill="none" stroke="#9aa3ab" stroke-width="0.6"></circle>
+              </g>
+              <circle r="2.5" fill="#e59a5c"></circle>
+            </g>
+            <g transform="translate(-10.739 -16.725)">
+              <g class="g-anim g-planet">
+                <circle r="15.3" fill="none" stroke="none"></circle>
+                <path d="M-1.23,-14.97 -0.81,-14.94 -0.42,-14.80 -0.08,-14.57 0.06,-14.41 0.24,-13.91 0.45,-13.61 0.72,-13.37 1.03,-13.19 1.37,-13.07 1.73,-13.02 2.09,-13.03 2.44,-13.10 2.77,-13.24 3.15,-13.54 3.41,-13.95 3.77,-14.18 4.18,-14.28 4.36,-14.28 4.60,-14.27 5.01,-14.15 5.38,-13.94 5.68,-13.64 5.88,-13.27 5.93,-12.95 5.88,-12.52 6.09,-11.93 6.50,-11.45 6.99,-11.14 7.54,-10.98 8.06,-10.99 8.32,-11.06 8.83,-11.37 9.13,-11.42 9.43,-11.40 9.73,-11.31 10.24,-10.99 10.52,-10.65 10.72,-10.22 10.77,-9.77 10.73,-9.55 10.47,-9.05 10.41,-8.62 10.46,-8.18 10.62,-7.76 10.86,-7.39 11.18,-7.08 11.56,-6.85 12.15,-6.72 12.68,-6.79 13.08,-6.67 13.43,-6.43 13.69,-6.11 13.88,-5.73 13.96,-5.32 13.94,-4.91 13.80,-4.51 13.67,-4.34 13.25,-4.01 13.04,-3.70 12.91,-3.34 12.86,-2.97 12.88,-2.53 13.09,-1.94 13.38,-1.53 13.88,-1.17 14.39,-1.02 14.72,-0.70 14.93,-0.29 15.02,0.17 14.97,0.64 14.86,0.96 14.69,1.25 14.30,1.58 13.82,1.69 13.43,1.91 13.06,2.35 12.90,2.63 12.77,3.06 12.74,3.51 12.81,3.96 13.00,4.37 13.13,4.55 13.56,4.91 13.72,5.26 13.77,5.64 13.73,6.01 13.60,6.38 13.37,6.74 13.05,7.03 12.67,7.21 12.35,7.26 11.91,7.16 11.51,7.21 11.03,7.42 10.79,7.58 10.51,7.88 10.29,8.22 10.14,8.60 10.08,9.00 10.12,9.40 10.37,9.93 10.39,10.39 10.34,10.61 10.13,11.03 9.82,11.37 9.42,11.61 8.98,11.74 8.75,11.75 8.30,11.64 7.93,11.37 7.25,11.24 6.79,11.31 6.36,11.49 5.99,11.75 5.68,12.10 5.47,12.51 5.42,12.74 5.41,13.41 5.26,13.72 5.04,13.99 4.76,14.20 4.45,14.34 3.99,14.44 3.52,14.40 3.29,14.33 2.90,14.06 2.63,13.63 2.17,13.27 1.76,13.13 1.21,13.09 0.90,13.12 0.49,13.25 0.12,13.46 -0.18,13.77 -0.46,14.38 -0.76,14.67 -1.13,14.84 -1.53,14.92 -1.94,14.89 -2.33,14.77 -2.69,14.56 -3.06,14.07 -3.18,13.41 -3.41,13.02 -3.75,12.70 -4.15,12.47 -4.59,12.34 -5.05,12.31 -5.50,12.40 -5.90,12.62 -6.15,12.85 -6.44,13.03 -6.80,13.10 -7.18,13.08 -7.53,12.98 -7.86,12.79 -8.13,12.55 -8.35,12.25 -8.48,11.90 -8.50,11.53 -8.37,10.98 -8.40,10.61 -8.55,10.17 -8.91,9.67 -9.27,9.38 -9.83,9.13 -10.37,9.09 -11.07,9.28 -11.29,9.27 -11.70,9.14 -12.06,8.89 -12.34,8.56 -12.53,8.16 -12.61,7.73 -12.56,7.30 -12.48,7.10 -12.12,6.67 -11.98,6.31 -11.93,5.92 -11.97,5.53 -12.08,5.16 -12.44,4.57 -12.92,4.18 -13.38,4.03 -13.79,4.02 -14.09,3.87 -14.35,3.66 -14.54,3.39 -14.68,3.08 -14.77,2.46 -14.73,2.15 -14.51,1.65 -14.26,1.39 -13.88,1.23 -13.61,1.01 -13.40,0.73 -13.25,0.42 -13.16,0.08 -13.13,-0.36 -13.19,-0.80 -13.35,-1.21 -13.62,-1.57 -13.92,-1.79 -14.23,-1.94 -14.51,-2.29 -14.65,-2.71 -14.66,-2.91 -14.67,-3.16 -14.57,-3.60 -14.36,-4.00 -14.05,-4.32 -13.65,-4.52 -13.20,-4.52 -12.85,-4.61 -12.54,-4.78 -12.27,-5.01 -12.04,-5.29 -11.87,-5.60 -11.76,-5.94 -11.71,-6.29 -11.72,-6.65 -11.93,-7.22 -12.20,-7.53 -12.30,-7.86 -12.32,-8.20 -12.20,-8.66 -11.93,-9.12 -11.57,-9.44 -11.08,-9.66 -10.62,-9.68 -10.19,-9.49 -9.89,-9.44 -9.58,-9.45 -9.01,-9.64 -8.58,-9.94 -8.24,-10.34 -8.01,-10.81 -7.95,-11.33 -8.08,-11.84 -8.03,-12.22 -7.77,-12.71 -7.63,-12.88 -7.32,-13.11 -6.90,-13.29 -6.44,-13.35 -6.21,-13.33 -5.79,-13.17 -5.49,-12.85 -5.18,-12.64 -4.84,-12.52 -4.47,-12.47 -4.10,-12.50 -3.75,-12.59 -3.41,-12.74 -3.11,-12.95 -2.86,-13.22 -2.61,-13.71 -2.56,-14.11 -2.34,-14.46 -2.02,-14.73 -1.64,-14.90ZM0.28,-6.99 1.52,-6.83 2.54,-6.52 3.35,-6.14 4.25,-5.56 5.05,-4.85 5.83,-3.87 6.35,-2.94 6.67,-2.10 6.92,-1.06 7.00,0.01 6.88,1.25 6.61,2.29 6.19,3.27 5.61,4.18 5.04,4.86 4.09,5.68 3.18,6.23 2.19,6.65 1.32,6.87 0.08,7.00 -0.99,6.93 -1.86,6.74 -2.87,6.38 -3.96,5.77 -4.79,5.10 -5.52,4.31 -6.02,3.57 -6.49,2.61 -6.85,1.41 -6.99,0.35 -6.96,-0.72 -6.81,-1.60 -6.49,-2.62 -6.01,-3.58 -5.28,-4.59 -4.65,-5.23 -3.80,-5.88 -2.85,-6.39 -1.67,-6.79 -0.62,-6.97Z" fill="#6b737c" fill-rule="evenodd" stroke="#8a939c" stroke-width="0.12"></path>
+                <circle r="6.6" fill="none" stroke="#c4c9ce" stroke-width="1.1"></circle>
+                <circle r="4.1" fill="none" stroke="#9aa3ab" stroke-width="0.6"></circle>
+              </g>
+              <circle r="2.5" fill="#e59a5c"></circle>
+            </g>
+          </g>
+          <g class="g-anim g-sun">
+            <circle r="7" fill="none" stroke="none"></circle>
+            <path d="M-1.83,-6.17 -2.35,-6.12 -2.83,-5.90 -3.23,-5.55 -3.40,-5.30 -3.50,-5.02 -3.54,-4.72 -3.38,-4.14 -3.40,-3.55 -3.50,-3.26 -3.81,-2.74 -4.25,-2.34 -4.72,-2.12 -4.97,-2.08 -5.41,-2.11 -5.59,-2.06 -5.91,-1.89 -6.26,-1.50 -6.44,-1.12 -6.52,-0.76 -6.51,-0.34 -6.42,0.02 -6.27,0.31 -6.06,0.57 -5.78,0.75 -5.18,0.89 -4.94,1.04 -4.72,1.23 -4.38,1.69 -4.19,2.23 -4.15,2.51 -4.20,3.02 -4.28,3.27 -4.53,3.63 -4.58,3.81 -4.59,4.17 -4.43,4.67 -4.19,5.02 -3.92,5.27 -3.45,5.51 -2.86,5.59 -2.54,5.53 -2.24,5.38 -1.82,4.94 -1.57,4.80 -1.02,4.65 -0.44,4.67 0.10,4.85 0.52,5.15 0.69,5.34 0.88,5.74 1.32,6.06 1.83,6.17 2.35,6.12 2.74,5.95 3.05,5.74 3.40,5.30 3.50,5.02 3.54,4.72 3.52,4.54 3.38,4.19 3.39,3.73 3.49,3.30 3.75,2.81 4.25,2.34 4.72,2.12 4.97,2.08 5.41,2.11 5.59,2.06 5.91,1.89 6.26,1.50 6.44,1.12 6.52,0.76 6.51,0.34 6.42,-0.02 6.27,-0.31 6.06,-0.57 5.78,-0.75 5.18,-0.89 4.94,-1.04 4.72,-1.23 4.38,-1.69 4.19,-2.23 4.15,-2.51 4.20,-3.02 4.28,-3.27 4.53,-3.63 4.58,-3.81 4.59,-4.17 4.43,-4.67 4.19,-5.02 3.92,-5.27 3.45,-5.51 2.86,-5.59 2.54,-5.53 2.24,-5.38 1.82,-4.94 1.57,-4.80 1.02,-4.65 0.44,-4.67 -0.10,-4.85 -0.52,-5.15 -0.69,-5.34 -0.88,-5.74 -1.01,-5.87 -1.32,-6.06ZM-0.05,-2.49 -0.89,-2.33 -1.25,-2.16 -1.74,-1.78 -2.13,-1.29 -2.39,-0.72 -2.49,0.12 -2.44,0.52 -2.24,1.11 -1.73,1.80 -1.43,2.05 -0.87,2.34 -0.03,2.50 0.59,2.43 0.96,2.30 1.68,1.84 2.09,1.37 2.36,0.80 2.46,0.42 2.49,-0.21 2.27,-1.03 2.08,-1.38 1.67,-1.85 0.95,-2.31 0.35,-2.47Z" fill="#7cc4e0" fill-rule="evenodd"></path>
+            <circle cx="0" cy="-3.6" r="0.55" fill="#0b0d0f"></circle>
+          </g>
+          <circle r="0.9" fill="#0b0d0f"></circle>
+        </svg>
+      </div>
+      <figcaption style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+        <div style="display: flex; flex-wrap: wrap; gap: 14px; font: 400 11px/1.4 'IBM Plex Mono', monospace; color: #b4bac0">
+          <span style="display: inline-flex; align-items: center; gap: 7px"><span style="width: 10px; height: 10px; background: #7cc4e0; border-radius: 2px"></span>sun · input (with rotor)</span>
+          <span style="display: inline-flex; align-items: center; gap: 7px"><span style="width: 10px; height: 10px; background: #e59a5c; border-radius: 2px"></span>carrier & pins · output</span>
+          <span style="display: inline-flex; align-items: center; gap: 7px"><span style="width: 10px; height: 10px; background: #3a4047; border: 1px solid #59616a; border-radius: 2px"></span>ring · fixed</span>
+        </div>
+        <div style="display: flex; gap: 6px">
+          <button class="q-btn" onClick="{{toggleGear}}" aria-pressed="{{gearRunning}}">{{gearLabel}}</button>
+          <a class="q-btn" href="#explorer" onClick="{{goGear}}">Isolate in 3D →</a>
+        </div>
+      </figcaption>
+      <p style="margin: 0; font: 400 11px/1.6 'IBM Plex Mono', monospace; color: #8b939b">Profiles are sections through the CAD at one plane (helical lobes twist with depth). Kinematics are exact for the measured lobe counts: the sun turns 7× per carrier turn, each planet spins −2.4× relative to the carrier. The black dots mark rotation; nothing here models contact forces, deflection or clearance.</p>
+    </figure>
+  </div>
+</section>
+
+<!-- ============================================================ 6 TORQUE PATH -->
+<section id="torque" aria-labelledby="torque-title" style="background: #0e1114; border-top: 1px solid rgba(214,222,230,0.08); border-bottom: 1px solid rgba(214,222,230,0.08)">
+  <div style="max-width: 1360px; margin: 0 auto; padding: 80px clamp(16px, 4vw, 40px)">
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 20px 40px; margin-bottom: 30px">
+      <div style="display: flex; flex-direction: column; gap: 14px; max-width: 46rem">
+        <span style="font: 500 11px/1 'IBM Plex Mono', monospace; letter-spacing: 0.12em; text-transform: uppercase; color: #7cc4e0">05 — Follow the torque</span>
+        <h2 id="torque-title" style="margin: 0; font-weight: 300; font-stretch: 112%; font-size: clamp(30px, 3.6vw, 48px); line-height: 1.02; letter-spacing: -0.02em">From battery to output flange in five steps.</h2>
+      </div>
+      <a class="q-cta" href="#explorer" onClick="{{goTorque}}">Play in the 3D cutaway</a>
+    </div>
+    <ol aria-label="Energy and torque flow, schematic" style="list-style: none; margin: 0 0 22px; padding: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+      <sc-for list="{{flowChips}}" as="fc" hint-placeholder-count="10">
+        <li style="display: inline-flex; align-items: center; gap: 8px">
+          <span style="font: 500 11.5px/1 'IBM Plex Mono', monospace; padding: 9px 11px; border-radius: 4px; border: 1px solid {{fc.bd}}; color: {{fc.col}}; background: {{fc.bg}}">{{fc.t}}</span>
+          <span aria-hidden="true" style="color: #4f575f; font: 400 12px/1 'IBM Plex Mono', monospace">{{fc.arrow}}</span>
+        </li>
+      </sc-for>
+    </ol>
+    <div role="group" aria-label="Torque path steps" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 10px">
+      <sc-for list="{{tcards}}" as="tc" hint-placeholder-count="5">
+        <button class="q-cell" aria-pressed="{{tc.on}}" onClick="{{tc.go}}" style="gap: 12px; padding: 18px">
+          <span style="display: flex; align-items: center; justify-content: space-between; width: 100%">
+            <span style="font: 300 34px/1 'Archivo', sans-serif; color: {{tc.col}}">{{tc.n}}</span>
+            <span style="font: 500 10px/1 'IBM Plex Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; color: #8b939b">{{tc.tag}}</span>
+          </span>
+          <span style="font: 600 15px/1.25 'Archivo', sans-serif; color: #ecebe6; text-align: left">{{tc.title}}</span>
+          <span style="font: 400 13px/1.55 'Archivo', sans-serif; color: #b4bac0; text-align: left">{{tc.body}}</span>
+        </button>
+      </sc-for>
+    </div>
+    <p style="margin: 18px 0 0; font: 400 11px/1.6 'IBM Plex Mono', monospace; color: #8b939b; max-width: 70rem">Schematic: wiring between the controller and the coils is not modelled in the CAD, so electrical steps are shown as a path, not as physical routing. “×7 torque” is the ideal ratio before friction and other losses; the article does not report gearbox efficiency.</p>
+  </div>
+</section>
+
+<!-- ============================================================ 7 PERFORMANCE -->
+<section id="performance" aria-labelledby="perf-title" style="max-width: 1360px; margin: 0 auto; padding: 80px clamp(16px, 4vw, 40px)">
+  <div style="display: flex; flex-direction: column; gap: 14px; max-width: 50rem; margin-bottom: 30px">
+    <span style="font: 500 11px/1 'IBM Plex Mono', monospace; letter-spacing: 0.12em; text-transform: uppercase; color: #7cc4e0">06 — Performance & trade-offs</span>
+    <h2 id="perf-title" style="margin: 0; font-weight: 300; font-stretch: 112%; font-size: clamp(30px, 3.6vw, 48px); line-height: 1.02; letter-spacing: -0.02em">What was measured, and under what conditions.</h2>
+    <p style="margin: 0; font-size: 15.5px; line-height: 1.6; color: #b4bac0">Every figure is tagged by where it comes from. 29.4 N·m is one peak holding test at the controller’s 50 A limit — not a continuous rating, and not a guarantee for other builds.</p>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 34px">
+    <sc-for list="{{bigStats}}" as="bs" hint-placeholder-count="4">
+      <div style="flex: 1 1 230px; min-width: 0; border-top: 2px solid {{bs.col}}; padding: 18px 0 0; display: flex; flex-direction: column; gap: 10px">
+        <span style="font: 500 10px/1 'IBM Plex Mono', monospace; letter-spacing: 0.1em; text-transform: uppercase; color: {{bs.col}}">{{bs.tag}}</span>
+        <span style="font: 200 clamp(44px, 5vw, 64px)/0.95 'Archivo', sans-serif; font-stretch: 105%; letter-spacing: -0.03em">{{bs.v}}<span style="font-size: 18px; font-weight: 500; color: #9aa3ab; margin-left: 6px; letter-spacing: 0">{{bs.u}}</span></span>
+        <span style="font: 600 14px/1.3 'Archivo', sans-serif">{{bs.l}}</span>
+        <span style="font: 400 12px/1.55 'IBM Plex Mono', monospace; color: #9aa3ab">{{bs.q}}</span>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 28px">
+    <div style="flex: 1.2 1 480px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+        <span style="font: 500 10.5px/1 'IBM Plex Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; color: #8b939b; margin-right: 6px">Evidence</span>
+        <sc-for list="{{evChips}}" as="ec" hint-placeholder-count="6">
+          <button class="q-chip" aria-pressed="{{ec.on}}" onClick="{{ec.go}}">{{ec.label}}</button>
+        </sc-for>
+      </div>
+      <ul aria-label="Figures" style="list-style: none; margin: 0; padding: 0; border-top: 1px solid rgba(214,222,230,0.12)">
+        <sc-for list="{{figs}}" as="fg" hint-placeholder-count="8">
+          <li style="display: grid; grid-template-columns: minmax(0, 150px) minmax(0, 1fr); gap: 6px 18px; padding: 14px 0; border-bottom: 1px solid rgba(214,222,230,0.10)">
+            <span style="font: 400 22px/1.1 'Archivo', sans-serif; font-stretch: 105%">{{fg.v}}</span>
+            <span style="display: flex; flex-direction: column; gap: 5px">
+              <span style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center"><span style="font: 600 14px/1.3 'Archivo', sans-serif">{{fg.l}}</span><span style="font: 500 9.5px/1 'IBM Plex Mono', monospace; letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 6px; border-radius: 3px; color: #0b0d0f; background: {{fg.tc}}">{{fg.t}}</span></span>
+              <span style="font: 400 12px/1.55 'IBM Plex Mono', monospace; color: #9aa3ab">{{fg.q}}</span>
+            </span>
+          </li>
+        </sc-for>
+      </ul>
+    </div>
+    <div style="flex: 1 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+      <h3 style="margin: 0; font: 600 17px/1.2 'Archivo', sans-serif; font-stretch: 108%">How the headline numbers connect</h3>
+      <div style="border: 1px solid rgba(214,222,230,0.12); border-radius: 8px; background: #101316; padding: 18px; display: flex; flex-direction: column; gap: 14px; font: 400 12.5px/1.6 'IBM Plex Mono', monospace; color: #cfd5da">
+        <div><span style="color: #8b939b">holding torque</span><br>117.5 N × 0.250 m arm = <span style="color: #ecebe6">29.4 N·m</span></div>
+        <div><span style="color: #8b939b">torque-to-weight</span><br>29.4 N·m ÷ 0.728 kg = <span style="color: #ecebe6">40.4 N·m/kg</span></div>
+        <div><span style="color: #8b939b">cost per N·m (article: $2.47/N·m)</span><br>BOM sum $72.62 ÷ 29.4 N·m = <span style="color: #ecebe6">$2.47</span><br><span style="color: #8b939b">the rounded $70 ÷ 29.4 gives $2.38 — the article’s figure matches the exact BOM total</span></div>
+        <div><span style="color: #8b939b">rough ideal ceiling (our estimate, not a source figure)</span><br>K<sub>t</sub> ≈ 8.27 / K<sub>v</sub> = 8.27 / 79 ≈ 0.105 N·m/A<br>× 50 A × 7 ≈ <span style="color: #ecebe6">37 N·m</span> before losses and saturation<br><span style="color: #8b939b">29.4 N·m is ~80% of that. The 8.27/Kv rule assumes ideal sinusoidal FOC conventions; treat it as order-of-magnitude.</span></div>
+      </div>
+      <h3 style="margin: 10px 0 0; font: 600 17px/1.2 'Archivo', sans-serif; font-stretch: 108%">Where the money goes (BOM, priced 4/22/25)</h3>
+      <div role="table" aria-label="BOM cost by item" style="display: flex; flex-direction: column; gap: 8px">
+        <sc-for list="{{bomBars}}" as="bb" hint-placeholder-count="6">
+          <div role="row" title="{{bb.tip}}" style="display: grid; grid-template-columns: minmax(0, 160px) minmax(0, 1fr) 62px; gap: 10px; align-items: center">
+            <span role="cell" style="font: 400 12px/1.25 'IBM Plex Mono', monospace; color: #cfd5da">{{bb.name}}</span>
+            <span role="cell" style="height: 12px; background: rgba(214,222,230,0.06); border-radius: 0 4px 4px 0; overflow: hidden"><span style="display: block; height: 100%; width: {{bb.w}}; background: {{bb.col}}; border-radius: 0 4px 4px 0"></span></span>
+            <span role="cell" style="font: 500 12px/1 'IBM Plex Mono', monospace; color: #d9dee2; text-align: right">{{bb.v}}</span>
+          </div>
+        </sc-for>
+      </div>
+      <p style="margin: 0; font: 400 10.5px/1.5 'IBM Plex Mono', monospace; color: #8b939b">Line items × quantities from BOM.xlsx, summed here: $72.62 with controller, $42.63 without. The BOM has no filament line. The author notes parts were ordered before US tariffs took effect, so prices and availability may differ today.</p>
+    </div>
+  </div>
+
+  <h3 style="margin: 56px 0 18px; font: 300 clamp(24px, 2.6vw, 34px)/1.1 'Archivo', sans-serif; font-stretch: 110%; letter-spacing: -0.01em">Trade-offs, stated plainly</h3>
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap: 1px; background: rgba(214,222,230,0.12); border: 1px solid rgba(214,222,230,0.12)">
+    <sc-for list="{{trades}}" as="tr" hint-placeholder-count="8">
+      <article style="background: #0b0d0f; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+        <h4 style="margin: 0; font: 600 15.5px/1.2 'Archivo', sans-serif; font-stretch: 106%">{{tr.title}}</h4>
+        <p style="margin: 0; display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 8px; font-size: 13.5px; line-height: 1.55; color: #c3c9ce"><span aria-hidden="true" style="color: #7cc4e0; font-family: 'IBM Plex Mono', monospace">+</span><span><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Strength: </span>{{tr.plus}}</span></p>
+        <p style="margin: 0; display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 8px; font-size: 13.5px; line-height: 1.55; color: #c3c9ce"><span aria-hidden="true" style="color: #e59a5c; font-family: 'IBM Plex Mono', monospace">−</span><span><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Cost: </span>{{tr.minus}}</span></p>
+        <span style="font: 400 10.5px/1.4 'IBM Plex Mono', monospace; color: #8b939b">{{tr.src}}</span>
+      </article>
+    </sc-for>
+  </div>
+</section>
+
+<!-- ============================================================ 8 CAD TO HARDWARE -->
+<section id="build" aria-labelledby="build-title" style="background: #0e1114; border-top: 1px solid rgba(214,222,230,0.08); border-bottom: 1px solid rgba(214,222,230,0.08)">
+  <div style="max-width: 1360px; margin: 0 auto; padding: 80px clamp(16px, 4vw, 40px)">
+    <div style="display: flex; flex-direction: column; gap: 14px; max-width: 50rem; margin-bottom: 34px">
+      <span style="font: 500 11px/1 'IBM Plex Mono', monospace; letter-spacing: 0.12em; text-transform: uppercase; color: #7cc4e0">07 — From CAD to physical hardware</span>
+      <h2 id="build-title" style="margin: 0; font-weight: 300; font-stretch: 112%; font-size: clamp(30px, 3.6vw, 48px); line-height: 1.02; letter-spacing: -0.02em">Seven steps the author actually took.</h2>
+      <p style="margin: 0; font-size: 15.5px; line-height: 1.6; color: #b4bac0">The real build photos and the test videos live in the original article; they are linked rather than reproduced here. The two images on this page are genuine project files: the Fusion 360 preview embedded in the CAD file, and the winding diagram from the repository.</p>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 14px">
+      <sc-for list="{{buildSteps}}" as="bstep" hint-placeholder-count="7">
+        <article style="border: 1px solid rgba(214,222,230,0.12); border-radius: 8px; background: #0b0d0f; overflow: hidden; display: flex; flex-direction: column">
+          <sc-if value="{{bstep.hasImg}}" hint-placeholder-val="{{ false }}">
+            <div style="background: {{bstep.imgBg}}; height: 210px; display: flex; align-items: center; justify-content: center; overflow: hidden"><img src="{{bstep.img}}" alt="{{bstep.alt}}" style="max-width: 100%; max-height: 100%; object-fit: contain; display: block"></div>
+          </sc-if>
+          <div style="padding: 18px; display: flex; flex-direction: column; gap: 10px; flex: 1">
+            <span style="font: 500 10.5px/1 'IBM Plex Mono', monospace; letter-spacing: 0.1em; text-transform: uppercase; color: #7cc4e0">{{bstep.n}} · {{bstep.kicker}}</span>
+            <h3 style="margin: 0; font: 600 17px/1.2 'Archivo', sans-serif; font-stretch: 106%">{{bstep.title}}</h3>
+            <p style="margin: 0; font-size: 13.5px; line-height: 1.6; color: #b4bac0">{{bstep.body}}</p>
+            <sc-if value="{{bstep.hasCfg}}" hint-placeholder-val="{{ false }}">
+              <dl style="margin: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 14px; font: 400 11.5px/1.4 'IBM Plex Mono', monospace; border-top: 1px solid rgba(214,222,230,0.10); padding-top: 10px">
+                <sc-for list="{{cfg}}" as="cf" hint-placeholder-count="6">
+                  <dt style="color: #8b939b">{{cf.k}}</dt><dd style="margin: 0; color: #d9dee2; text-align: right">{{cf.v}}</dd>
+                </sc-for>
+              </dl>
+            </sc-if>
+            <span style="flex: 1"></span>
+            <span style="font: 400 10.5px/1.5 'IBM Plex Mono', monospace; color: #8b939b">{{bstep.cap}}</span>
+            <sc-if value="{{bstep.hasLink}}" hint-placeholder-val="{{ true }}">
+              <a href="https://cadenkraft.com/ironless-cycloidal-planetary-actuator/" target="_blank" rel="noopener" style="font: 500 12px/1.4 'IBM Plex Mono', monospace">{{bstep.link}} ↗</a>
+            </sc-if>
+          </div>
+        </article>
+      </sc-for>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 9 SOURCE -->
+<section id="source" aria-labelledby="source-title" style="max-width: 1360px; margin: 0 auto; padding: 96px clamp(16px, 4vw, 40px) 72px">
+  <div style="display: flex; flex-wrap: wrap; gap: 40px 64px">
+    <div style="flex: 1 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 22px">
+      <span style="font: 500 11px/1 'IBM Plex Mono', monospace; letter-spacing: 0.12em; text-transform: uppercase; color: #7cc4e0">08 — Open source</span>
+      <h2 id="source-title" style="margin: 0; font-weight: 300; font-stretch: 112%; font-size: clamp(36px, 5vw, 72px); line-height: 0.96; letter-spacing: -0.025em">Designed by<br><span style="font-weight: 800; font-stretch: 125%">Caden Kraft.</span></h2>
+      <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #c3c9ce; max-width: 34rem">Everything shown on this page — the CAD, the simulations, the bill of materials, the controller configuration and the test results — is his work, published openly. If you want to study or build the actuator, go to the source.</p>
+      <div style="display: flex; flex-wrap: wrap; gap: 12px">
+        <a class="q-cta" href="https://github.com/CKraft11/Ironless-QDD-Actuator" target="_blank" rel="noopener">Open the repository ↗</a>
+        <a class="q-ghost" href="https://cadenkraft.com/ironless-cycloidal-planetary-actuator/" target="_blank" rel="noopener">Read the article ↗</a>
+      </div>
+      <div style="border: 1px solid rgba(214,222,230,0.14); border-radius: 8px; padding: 18px; display: flex; flex-direction: column; gap: 10px; background: #101316">
+        <span style="font: 500 10.5px/1 'IBM Plex Mono', monospace; letter-spacing: 0.1em; text-transform: uppercase; color: #9aa3ab">Licence & attribution</span>
+        <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #c3c9ce">The repository is released under the MIT License with an added notice: copies must include “Credit: Caden Kraft (GitHub: CKraft11)”. The article also asks for credit if the work is reused.</p>
+        <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #c3c9ce">This page is an independent educational visualization. It is not an official project site and is not endorsed by Caden Kraft, Makerbase or any supplier.</p>
+      </div>
+    </div>
+    <div style="flex: 1 1 420px; min-width: 0; display: flex; flex-direction: column">
+      <span style="font: 500 10.5px/1 'IBM Plex Mono', monospace; letter-spacing: 0.1em; text-transform: uppercase; color: #9aa3ab; padding-bottom: 6px; border-bottom: 1px solid rgba(214,222,230,0.12)">Project files</span>
+      <sc-for list="{{links}}" as="lk" hint-placeholder-count="8">
+        <a class="q-link" href="{{lk.href}}" target="_blank" rel="noopener"><span style="display: flex; flex-direction: column; gap: 4px"><span>{{lk.t}}</span><span style="font: 400 11.5px/1.4 'IBM Plex Mono', monospace; color: #8b939b">{{lk.d}}</span></span><span aria-hidden="true" style="font: 400 14px/1 'IBM Plex Mono', monospace; color: #7cc4e0">↗</span></a>
+      </sc-for>
+    </div>
+  </div>
+
+  <details style="margin-top: 56px; border-top: 1px solid rgba(214,222,230,0.12); padding-top: 18px">
+    <summary style="cursor: pointer; font: 600 15px/1.3 'Archivo', sans-serif; padding: 6px 0">How this visualization was made, and what it cannot tell you</summary>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 22px; margin-top: 16px; font-size: 13.5px; line-height: 1.6; color: #b4bac0">
+      <p style="margin: 0"><strong style="color: #ecebe6">Geometry.</strong> The shared .f3d file embeds Fusion’s display tessellation (≈1.06 M vertices, 287 unique bodies). It was decoded, decimated to about 175 k unique triangles with crease-preserving normals, and re-instanced for 750 placed parts. B-rep surfaces, tolerances and body names are not used.</p>
+      <p style="margin: 0"><strong style="color: #ecebe6">Placement.</strong> Most occurrence transforms come straight from the file. The gearbox and controller sub-assemblies needed a parent transform that we reconstructed (a 90° axis change, plus a 24.4 mm offset for the board) and verified visually against the CAD preview. Small misplacements are possible.</p>
+      <p style="margin: 0"><strong style="color: #ecebe6">Identification.</strong> Parts were named from shape, BOM quantities and the article — for example six identical 5×14×5 bearings, fifteen M4 heat-set inserts. The controller was rebuilt rather than taken from the CAD: outline and six Ø3.3 mm holes from Makerbase’s dimension drawing (63 × 58 mm), parts placed from Makerbase product photos (about ±1 mm), silkscreen redrawn, part heights estimated.</p>
+      <p style="margin: 0"><strong style="color: #ecebe6">Motion.</strong> Gear and rotor motion follow ideal kinematics from lobe counts. Coil glow follows the published winding pattern at 21 electrical cycles per turn. Field sketches are illustrative. Nothing here is a structural, thermal or electromagnetic simulation, and no test was reproduced.</p>
+    </div>
+  </details>
+
+  <footer style="margin-top: 56px; padding-top: 22px; border-top: 1px solid rgba(214,222,230,0.10); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; font: 400 11px/1.5 'IBM Plex Mono', monospace; color: #6f7880">
+    <span>Ironless QDD Actuator · original design © Caden Kraft (CKraft11), MIT + credit</span>
+    <span>Independent visualization · sources: GitHub repository, cadenkraft.com article (July 2025), original CAD</span>
+  </footer>
+</section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#7cc4e0","options":["#7cc4e0","#9fb7c9","#e59a5c"]},"$preview":{"width":1440,"height":10600}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      mode: 'explore', sel: null, hov: null, vis: {}, iso: null, stage: 1, tstep: 1, playing: true,
+      section: false, labels: true, loading: true, loadMsg: 'Loading CAD geometry…', heroLoading: true,
+      exploded: false, openTop: true, seqPlaying: false,
+      mArrows: true, mFlux: false, mPhase: true, cmp: 'hi', gearPaused: false, ev: 'all'
+    };
+    this.cv = null; this.ov = null; this.hc = null; this.rd = null; this.sl = null;
+    this.MODEL = '/_blob/83c1f012c2c893cb5977e67a1246e577';
+  }
+  componentDidMount() { this._tries = 0; this.boot(); }
+  componentWillUnmount() {
+    this.dead = true; clearTimeout(this._bt); clearInterval(this._seqT);
+    if (this.viewer) this.viewer.dispose(); if (this.hero) this.hero.dispose();
+  }
+  boot() {
+    if (this.dead) return;
+    const E = window.QDDEngine;
+    if (!E || !this.cv || !this.hc) {
+      if (++this._tries > 200) { this.setState({ loadMsg: '3D runtime unavailable in this view', heroLoading: false }); return; }
+      this._bt = setTimeout(() => this.boot(), 100); return;
+    }
+    const self = this;
+    try {
+      this.hero = new E.Viewer(this.hc, null, { kind: 'hero', modelUrl: this.MODEL, onReady: () => self.setState({ heroLoading: false }) });
+      this.viewer = new E.Viewer(this.cv, this.ov, {
+        kind: 'explorer', modelUrl: this.MODEL,
+        onReady: () => self.setState({ loading: false }),
+        onError: () => self.setState({ loadMsg: 'Could not load the model file', heroLoading: false }),
+        onSelect: (g) => self.setState({ sel: g }),
+        onHover: (g) => self.setState({ hov: g }),
+        onVisibility: (v) => self.setState({ vis: v, iso: v._isolate || null }),
+        onStage: (n) => self.setState({ stage: n }),
+        onTorqueStep: (n) => self.setState({ tstep: n }),
+        onExplodeValue: (x) => { if (self.sl) self.sl.value = String(Math.round(x * 100)); },
+        onSection: (on) => self.setState({ section: on }),
+        get readout() { return self.rd; }
+      });
+    } catch (e) { this.setState({ loadMsg: 'WebGL is not available here', heroLoading: false }); }
+  }
+  V() { return this.viewer; }
+  setMode(m) {
+    clearInterval(this._seqT);
+    const v = this.V(); if (v) v.setMode(m);
+    const patch = { mode: m, seqPlaying: false, playing: true };
+    if (m === 'gearbox') patch.openTop = true;
+    if (m !== 'explore') patch.exploded = false;
+    if (m === 'motor' || m === 'torque') patch.section = true; else patch.section = false;
+    this.setState(patch);
+    if (v) v.setPlaying(true);
+  }
+  goGroup(g) {
+    const v = this.V(); if (!v) return;
+    if (this.state.mode !== 'explore') this.setMode('explore');
+    v.showAll(); v.animateExplode(1, 1300); this.setState({ exploded: true });
+    setTimeout(() => { if (this.viewer) this.viewer.focus(g); }, 700);
+  }
+
+  renderVals() {
+    const s = this.state, self = this, E = window.QDDEngine;
+    const GROUPS = (E && E.GROUPS) || {};
+    const INFO = this.info();
+    const mode = s.mode;
+    const tabsDef = [['explore', 'Explore'], ['sequence', 'Build sequence'], ['gearbox', 'Gearbox'], ['motor', 'Motor section'], ['torque', 'Follow the torque']];
+    const tabs = tabsDef.map((t, i) => ({ n: '0' + (i + 1), label: t[1], on: mode === t[0] ? 'true' : 'false', go: () => self.setMode(t[0]) }));
+    const viewsDef = mode === 'gearbox' ? [['gearbox', 'Top'], ['side', 'Side'], ['iso', 'Iso']]
+      : mode === 'motor' ? [['motor', 'Axial'], ['iso', 'Iso']]
+      : [['iso', 'Iso'], ['output', 'Output face'], ['controller', 'Controller side'], ['side', 'Side']];
+    const views = viewsDef.map(v => ({ label: v[1], go: () => { const vw = self.V(); if (vw) vw.setView(v[0]); } }));
+    const MODEINFO = {
+      explore: ['Explore', 'Full assembly. Select parts, explode along the axis, or cut a half-section.'],
+      sequence: ['Build sequence · stage ' + s.stage + ' of 6', this.stageTitle(s.stage) + ' — the newest parts slide into place.'],
+      gearbox: ['Gearbox · sun in, ring fixed, carrier out', 'Blue sun = input, orange carrier = output. Lid off hides the upper ring half and carrier plate.'],
+      motor: ['Motor · axial cut at mid-plane', 'Magnets tinted by assumed polarity; coils glow with phase current (illustrative timing).'],
+      torque: ['Follow the torque · step ' + s.tstep + ' of 5', this.tsteps()[s.tstep - 1].title]
+    };
+    // components list
+    const CATS = [['structure', 'Structure'], ['motor', 'Electromagnetic'], ['gearbox', 'Gearbox'], ['hardware', 'Bearings & hardware'], ['electronics', 'Electronics']];
+    const SW = { housing: '#2f343a', frame: '#454b52', retainer: '#454b52', cover: '#2f343a', stator: '#6d757c', coils: '#c47b4f', rotor: '#3a3f45', magMain: '#d3d7db', magHal: '#b5bcc2', sun: '#7cc4e0', planets: '#7c858e', ring: '#565d65', carrier: '#e59a5c', pins: '#b0b6bb', pbearings: '#c9ced3', b6710: '#c9ced3', b6805: '#c9ced3', axle: '#55585d', fasteners: '#b8995a', encoder: '#6b737c', pcb: '#2d3a3f', encplate: '#3a4046', terminals: '#23a03c', xt30: '#b59a3a' };
+    const vis = s.vis || {};
+    const cats = CATS.map(c => ({
+      label: c[1],
+      items: Object.keys(GROUPS).filter(g => GROUPS[g].cat === c[0]).map(g => {
+        const isVis = vis[g] !== false; const isSel = s.sel === g; const isIso = s.iso === g;
+        return {
+          name: GROUPS[g].name, sw: SW[g] || '#777', sel: isSel ? 'true' : 'false', op: isVis ? '1' : '0.45',
+          bg: isSel ? 'rgba(124,196,224,0.12)' : (s.hov === g ? 'rgba(214,222,230,0.05)' : 'transparent'),
+          vis: isVis ? 'true' : 'false', pupil: isVis ? '2.2' : '0', eyeLabel: (isVis ? 'Hide ' : 'Show ') + GROUPS[g].name,
+          isoOn: isIso ? 'true' : 'false', isoCol: isIso ? '#7cc4e0' : '#7d868e', isoLabel: (isIso ? 'Stop isolating ' : 'Isolate ') + GROUPS[g].name,
+          pick: () => { const v = self.V(); if (v) v.select(isSel ? null : g); },
+          enter: () => { const v = self.V(); if (v) { v.state.hover = g; } self.setState({ hov: g }); },
+          leave: () => { const v = self.V(); if (v) { v.state.hover = null; } self.setState({ hov: null }); },
+          eye: () => { const v = self.V(); if (v) v.toggleVisible(g); },
+          iso: () => { const v = self.V(); if (v) v.isolate(g); }
+        };
+      })
+    })).filter(c => c.items.length);
+    const sel = s.sel && INFO[s.sel] ? s.sel : null;
+    const info = sel ? Object.assign({ stage: this.stageOf(sel), cat: (GROUPS[sel] || {}).cat || '' }, INFO[sel]) : { title: '', spec: '', fn: '', mat: '', why: '', rel: '', src: [], stage: '', cat: '' };
+    const stageBtns = [1, 2, 3, 4, 5, 6].map(n => ({ n: String(n), on: s.stage === n ? 'true' : 'false', aria: 'Stage ' + n + ': ' + this.stageTitle(n), go: () => { clearInterval(self._seqT); self.setState({ seqPlaying: false }); const v = self.V(); if (v) v.setStage(n); } }));
+    const TS = this.tsteps();
+    const tsteps = TS.map((t, i) => ({ n: String(i + 1), short: t.short, on: s.tstep === i + 1 ? 'true' : 'false', col: i >= 3 ? '#e59a5c' : '#7cc4e0', go: () => { const v = self.V(); if (v) v.setTorqueStep(i + 1); } }));
+    // ---------- motor svg data
+    const MAIN = [-178.25, -169.67, -161.1, -152.53, -143.96, -135.39, -126.82, -118.25, -109.68, -101.11, -92.54, -84.07, -75.5, -66.93, -58.36, -49.79, -41.22, -32.65, -24.08, -15.5, -6.93, 1.64, 10.21, 18.78, 27.35, 35.93, 44.5, 53.07, 61.64, 70.21, 78.79, 87.36, 96.03, 104.61, 113.18, 121.75, 130.32, 138.9, 147.47, 156.04, 164.61, 173.18];
+    const HAL = [-174.0, -165.43, -156.86, -148.28, -139.71, -131.14, -122.57, -114.0, -105.43, -96.86, -88.32, -79.75, -71.18, -62.61, -54.04, -45.46, -36.89, -28.32, -19.75, -11.18, -2.61, 5.96, 14.53, 23.11, 31.68, 40.25, 48.82, 57.39, 65.97, 74.54, 83.11, 91.71, 100.28, 108.86, 117.43, 126.0, 134.57, 143.14, 151.72, 160.29, 168.86, 177.43];
+    const COILA = [-90.01, -80.04, -70.08, -60.06, -50.05, -40.08, -30.07, -20.06, -10.03, 0.0, 9.97, 19.94, 29.87, 39.94, 49.97, 59.93, 69.96, 79.94, 89.9, 99.96, 109.97, 119.93, 129.95, 139.93, 149.93, 159.94, 169.94, 179.94, 189.91, 199.92, 209.92, 219.93, 229.92, 239.95, 249.94, 259.97];
+    const mains = MAIN.map((a, i) => ({ tr: 'rotate(' + a + ')', fill: i % 2 ? '#6fb6d6' : '#e59a5c', arrow: i % 2 ? 'M53.5 0H51.2M51.2 0l0.9 -0.7M51.2 0l0.9 0.7' : 'M51.2 0H53.5M53.5 0l-0.9 -0.7M53.5 0l-0.9 0.7' }));
+    const hals = HAL.map((a, i) => ({ tr: 'rotate(' + a + ')', fill: i % 2 ? '#bfe0ee' : '#f2c9a8', arrow: i % 2 ? 'M52.5 0.6V-0.6M52.5 -0.6l-0.4 0.45M52.5 -0.6l0.4 0.45' : 'M52.5 -0.6V0.6M52.5 0.6l-0.4 -0.45M52.5 0.6l0.4 -0.45' }));
+    const WIND = 'AabBCcaABbcC';
+    const PC = { A: '#e08a52', B: '#5fa9cc', C: '#d8cfb8' };
+    const coils = COILA.map(a => {
+      let idx = Math.round(a / 10); idx = ((idx % 36) + 36) % 36; const ch = WIND.charAt(idx % 12); const up = ch === ch.toUpperCase();
+      return { tr: 'rotate(' + a + ')', fill: s.mPhase ? PC[ch.toUpperCase()] : '#b8714a', op: s.mPhase ? (up ? '1' : '0.5') : '1' };
+    });
+    const pol = (r, a) => { const t = a * Math.PI / 180; return (r * Math.cos(t)).toFixed(2) + ' ' + (r * Math.sin(t)).toFixed(2); };
+    const fluxIn = [], fluxOut = [];
+    for (let i = 0; i < MAIN.length; i++) {
+      const a = MAIN[i], b = i + 1 < MAIN.length ? MAIN[i + 1] : MAIN[0] + 360, m = (a + b) / 2;
+      fluxIn.push('M' + pol(50.4, a) + 'Q' + pol(41.5, m) + ' ' + pol(50.4, b));
+      fluxIn.push('M' + pol(50.4, a + 1.6) + 'Q' + pol(45.5, m) + ' ' + pol(50.4, b - 1.6));
+      fluxOut.push('M' + pol(54.6, a + 1.2) + 'Q' + pol(56.6, m) + ' ' + pol(54.6, b - 1.2));
+    }
+    // ---------- comparison cells
+    const arrowUp = (x) => 'M' + (x + 8) + ' 33V25M' + (x + 8) + ' 25l-3 3.5M' + (x + 8) + ' 25l3 3.5';
+    const arrowDn = (x) => 'M' + (x + 8) + ' 25V33M' + (x + 8) + ' 33l-3 -3.5M' + (x + 8) + ' 33l3 -3.5';
+    const arrowR = (x) => 'M' + (x + 4) + ' 29H' + (x + 12) + 'M' + (x + 12) + ' 29l-3.5 -3M' + (x + 12) + ' 29l-3.5 3';
+    const arrowL = (x) => 'M' + (x + 12) + ' 29H' + (x + 4) + 'M' + (x + 4) + ' 29l3.5 -3M' + (x + 4) + ' 29l3.5 3';
+    const xs = [8, 26, 44, 62, 80, 98, 116, 134];
+    const halMags = xs.map((x, i) => ({ x: String(x), fill: i % 2 ? '#d7dbdf' : (i % 4 === 0 ? '#e59a5c' : '#6fb6d6'), ar: [arrowUp, arrowR, arrowDn, arrowL][i % 4](x) }));
+    const conMags = [8, 44, 80, 116].map((x, i) => ({ x: String(x), fill: i % 2 ? '#6fb6d6' : '#e59a5c', ar: i % 2 ? arrowDn(x) : arrowUp(x) }));
+    const loopsBelow = (k, w, o) => [0, 1, 2].slice(0, k).map(j => ({ d: 'M' + (16 + j * 2) + ' 38 Q 34 ' + (60 + j * 6) + ' ' + (52 - j * 2) + ' 38 M' + (52 + j * 2) + ' 38 Q 70 ' + (60 + j * 6) + ' ' + (88 - j * 2) + ' 38 M' + (88 + j * 2) + ' 38 Q 106 ' + (60 + j * 6) + ' ' + (124 - j * 2) + ' 38', w: String(w), o: String(o) }));
+    const loopsAbove = (k, w, o) => [0, 1].slice(0, k).map(j => ({ d: 'M' + (16 + j * 2) + ' 20 Q 34 ' + (4 - j * 3) + ' ' + (52 - j * 2) + ' 20 M' + (52 + j * 2) + ' 20 Q 70 ' + (4 - j * 3) + ' ' + (88 - j * 2) + ' 20 M' + (88 + j * 2) + ' 20 Q 106 ' + (4 - j * 3) + ' ' + (124 - j * 2) + ' 20', w: String(w), o: String(o) }));
+    const CMP = {
+      hi: { name: 'Halbach + iron', val: '1.017', iron: true, mags: halMags, lines: loopsBelow(3, 1.2, 0.9), title: 'Halbach with back-iron · 1.017 N·m (100%)', body: 'The strongest variant in the simulation. Iron behind a Halbach array adds relatively little, because the array already cancels most of the field on its back side — and it adds mass and rotational inertia to the rotor.' },
+      hn: { name: 'Halbach, ironless', val: '0.929 · chosen', iron: false, mags: halMags, lines: loopsBelow(3, 1.0, 0.8).concat(loopsAbove(1, 0.6, 0.25)), title: 'Halbach, ironless · 0.929 N·m (91.4%) — the built design', body: 'Keeps 91.4% of the best simulated torque with a plastic rotor. The author’s stated reasons: avoid the iron ring, keep performance, and cut rotational inertia for quicker direction changes. Cost: 84 magnets instead of 42 and a fiddlier assembly.' },
+      ci: { name: 'Conventional + iron', val: '0.928', iron: true, mags: conMags, lines: loopsBelow(2, 1.0, 0.75), title: 'Conventional with back-iron · 0.928 N·m (91.3%)', body: 'The standard outrunner recipe: alternating radial magnets bonded to a steel ring that closes the flux path. Practically tied with the ironless Halbach in this simulation, but it needs a steel rotor ring.' },
+      cn: { name: 'Conventional, ironless', val: '0.737', iron: false, mags: conMags, lines: loopsBelow(2, 0.8, 0.55).concat(loopsAbove(2, 0.8, 0.55)), title: 'Conventional, ironless · 0.737 N·m (72.5%)', body: 'Without iron or the Halbach magnets, field leaks equally to both sides and the stator sees much less of it — the weakest of the four, which is why the Halbach magnets earn their place.' }
+    };
+    const cmpCells = ['hi', 'hn', 'ci', 'cn'].map(k => ({
+      name: CMP[k].name, val: CMP[k].val, iron: CMP[k].iron, mags: CMP[k].mags, lines: CMP[k].lines,
+      on: s.cmp === k ? 'true' : 'false', vcol: k === 'hn' ? '#7cc4e0' : '#b4bac0', aria: CMP[k].title + '. Illustrative field sketch.',
+      go: () => self.setState({ cmp: k })
+    }));
+    const FEMM = [['Halbach + iron', 1.017, '100.0%', 'hi'], ['Halbach, ironless', 0.929, '91.4%', 'hn'], ['Conventional + iron', 0.928, '91.3%', 'ci'], ['Conventional, ironless', 0.737, '72.5%', 'cn']];
+    const femm = FEMM.map(f => ({ name: f[0], v: f[1].toFixed(3), p: f[2], w: (f[1] / 1.1 * 100).toFixed(1) + '%', col: f[3] === 'hn' ? '#7cc4e0' : (s.cmp === f[3] ? '#9aa3ab' : '#4f575f'), lcol: f[3] === 'hn' ? '#d4eef9' : '#b4bac0', tip: f[0] + ': ' + f[1] + ' N·m average static torque (' + f[2] + ' of max), FEMM, comparative only' }));
+    // ---------- gearbox
+    const gearWhy = [
+      { n: '01', t: 'Spur teeth need sharp edges, but a round nozzle leaves a corner radius on every printed path — the tooth tips and roots never come out true.' },
+      { n: '02', t: 'Small printed spur teeth tend to shear off at the base; a lobe is a broad, rounded section with no notch at its root.' },
+      { n: '03', t: 'The “teeth” become one continuous wavy outline, which a 3D printer reproduces easily.' },
+      { n: '04', t: 'The profile gives constant contact with no backlash (the author’s design claim). After several minutes at about 30 N·m he reports no perceptible backlash.' }
+    ];
+    // ---------- torque
+    const flowDef = [['Battery / PSU', 1], ['power connector', 1], ['MKS XDrive Mini · FOC', 1], ['phases A · B · C', 2], ['36 coils', 2], ['air-gap force on 84 magnets', 3], ['rotor + sun · 1×', 4], ['3 planets', 4], ['fixed ring', 4], ['carrier · ≈7× torque', 5], ['load', 5]];
+    const flowChips = flowDef.map((f, i) => {
+      const on = f[1] === s.tstep, past = f[1] < s.tstep, out = f[1] >= 5;
+      return { t: f[0], arrow: i < flowDef.length - 1 ? '→' : '', col: on ? '#0b0d0f' : (past ? '#ecebe6' : '#9aa3ab'), bg: on ? (out ? '#e59a5c' : '#7cc4e0') : 'transparent', bd: on ? (out ? '#e59a5c' : '#7cc4e0') : (past ? 'rgba(214,222,230,0.4)' : 'rgba(214,222,230,0.16)') };
+    });
+    const tcards = TS.map((t, i) => ({ n: String(i + 1), title: t.title, body: t.body, tag: t.tag, col: i >= 3 ? '#e59a5c' : '#7cc4e0', on: s.tstep === i + 1 ? 'true' : 'false', go: () => { self.setState({ tstep: i + 1 }); const v = self.V(); if (v) v.setTorqueStep(i + 1); } }));
+    // ---------- performance
+    const EVC = { measured: '#7cc4e0', calculated: '#cfd5da', simulated: '#b9a6e0', design: '#9fd3a3', estimate: '#e59a5c' };
+    const FIGS = [
+      ['29.4 N·m', 'Peak holding torque', 'measured', 'Measured', '117.5 N on a force gauge at a 250 mm printed arm; 13S Audi e-tron module; stopped at the controller’s 50 A limit. Coil surface ≈78 °C. Single reported test.'],
+      ['14 N·m', 'Peak holding torque, lab supply', 'measured', 'Measured', 'Limited by a 24 V, 25 A Meanwell supply. Already above the 10 N·m goal.'],
+      ['≈79', 'Kᵥ (rpm/V)', 'measured', 'Measured', 'Back-driven with a drill at known speed, voltage read from one phase. Indirect method.'],
+      ['728 g', 'Actuator mass', 'measured', 'Measured', 'As reported in the article.'],
+      ['62.4–63.3 mΩ', 'Phase resistance (LCR)', 'measured', 'Measured', 'A 62.36 · B 62.42 · C 63.31 mΩ; inductance 33.04–33.92 µH. Article quotes ±0.76% / ±1.31% matching.'],
+      ['40.4 N·m/kg', 'Torque-to-weight', 'calculated', 'Calculated', '29.4 ÷ 0.728 = 40.38 (article states 40.38).'],
+      ['$2.47 /N·m', 'Cost per newton-metre', 'calculated', 'Calculated', 'Article figure; equals the summed BOM ($72.62) ÷ 29.4 N·m.'],
+      ['91.4%', 'Ironless Halbach vs best variant', 'simulated', 'Simulated', 'FEMM average static torque, comparative only (0.929 vs 1.017).'],
+      ['7 : 1', 'Gear reduction', 'design', 'Design', 'Chosen ratio; lobe counts 6 / 15 / 36 measured from CAD.'],
+      ['10 N·m · <$80', 'Original goals', 'design', 'Design goal', 'Holding-torque and per-actuator cost targets set at the start of the project.'],
+      ['~$40 / ~$70', 'Actuator / with controller', 'estimate', 'Historical est.', 'Rounded article figures; BOM priced 4/22/25, before US tariffs.']
+    ];
+    const figs = FIGS.filter(f => s.ev === 'all' || s.ev === f[2]).map(f => ({ v: f[0], l: f[1], t: f[3], tc: EVC[f[2]], q: f[4] }));
+    const evChips = [['all', 'All'], ['measured', 'Measured'], ['calculated', 'Calculated'], ['simulated', 'Simulated'], ['design', 'Design'], ['estimate', 'Estimate']].map(e => ({ label: e[1], on: s.ev === e[0] ? 'true' : 'false', go: () => self.setState({ ev: e[0] }) }));
+    const BOM = [['MKS XDrive Mini', 29.99], ['10010 stator', 17.63], ['N50 Halbach ×42', 5.88], ['N52 main ×42', 5.0], ['6710 bearings ×2', 4.52], ['6805 bearings ×2', 2.58], ['5×14×5 bearings ×6', 1.92], ['Magnet wire', 1.2], ['Pins, fasteners, inserts', 3.9]];
+    const bomBars = BOM.map(b => ({ name: b[0], v: '$' + b[1].toFixed(2), w: (b[1] / 30 * 100).toFixed(1) + '%', col: b[0] === 'MKS XDrive Mini' ? '#5f6870' : '#9aa3ab', tip: b[0] + ': $' + b[1].toFixed(2) }));
+    return {
+      accent: this.props.accent ?? '#7cc4e0',
+      setCanvas: (el) => { self.cv = el; }, setOverlay: (el) => { self.ov = el; }, setHeroCanvas: (el) => { self.hc = el; },
+      setReadout: (el) => { self.rd = el; }, setSlider: (el) => { self.sl = el; },
+      onKey: (e) => { const v = self.V(); if (v) v.handleKey(e); },
+      loading: s.loading, loadMsg: s.loadMsg, heroLoading: s.heroLoading,
+      heroStats: [
+        { v: '29.4', u: 'N·m', l: 'Peak holding torque', q: 'Reported · one test at the 50 A controller limit' },
+        { v: '728', u: 'g', l: 'Actuator mass', q: 'Reported' },
+        { v: '40.4', u: 'N·m/kg', l: 'Torque-to-weight', q: 'Reported · 29.4 ÷ 0.728' },
+        { v: '7:1', u: '', l: 'Cycloidal planetary', q: 'Design · 6 / 15 / 36 lobes' },
+        { v: '~$40', u: '/ $70', l: 'Actuator / with controller', q: 'Historical estimate · pre-tariff pricing' }
+      ],
+      tabs, views, modeTitle: MODEINFO[mode][0], modeHint: MODEINFO[mode][1],
+      isExplore: mode === 'explore', isSeq: mode === 'sequence', isTorque: mode === 'torque', isGear: mode === 'gearbox',
+      isKin: mode === 'gearbox' || mode === 'motor' || mode === 'torque',
+      exploded: s.exploded ? 'true' : 'false', explodeLabel: s.exploded ? 'Assemble' : 'Explode',
+      toggleExplode: () => { const v = self.V(); if (!v) return; const to = !self.state.exploded; v.animateExplode(to ? 1 : 0); self.setState({ exploded: to }); },
+      onExplodeInput: (e) => { const v = self.V(); if (v) v.setExplode(Number(e.target.value) / 100); },
+      section: s.section ? 'true' : 'false', toggleSection: () => { const v = self.V(); if (v) v.setSection(!self.state.section); },
+      labels: s.labels ? 'true' : 'false', toggleLabels: () => { const v = self.V(); const on = !self.state.labels; if (v) v.setLabels(on); self.setState({ labels: on }); },
+      reset: () => { clearInterval(self._seqT); const v = self.V(); if (v) v.resetView(); if (self.sl) self.sl.value = '0'; self.setState({ exploded: false, sel: null, seqPlaying: false }); },
+      playing: s.playing ? 'true' : 'false', playLabel: s.playing ? 'Pause motion' : 'Play motion',
+      togglePlay: () => { const v = self.V(); const on = !self.state.playing; if (v) v.setPlaying(on); self.setState({ playing: on }); },
+      openTop: s.openTop ? 'true' : 'false', toggleOpenTop: () => { const v = self.V(); const on = !self.state.openTop; if (v) v.setOpenTop(on); self.setState({ openTop: on }); },
+      stageBtns, seqPlayLabel: s.seqPlaying ? 'Pause' : 'Play build',
+      prevStage: () => { const v = self.V(); if (v) v.setStage(Math.max(1, self.state.stage - 1)); },
+      nextStage: () => { const v = self.V(); if (v) v.setStage(Math.min(6, self.state.stage + 1)); },
+      playSeq: () => {
+        if (self.state.seqPlaying) { clearInterval(self._seqT); self.setState({ seqPlaying: false }); return; }
+        const v = self.V(); if (!v) return; if (self.state.stage >= 6) v.setStage(1);
+        self.setState({ seqPlaying: true });
+        self._seqT = setInterval(() => { const vv = self.V(); if (!vv || self.state.stage >= 6) { clearInterval(self._seqT); self.setState({ seqPlaying: false }); return; } vv.setStage(self.state.stage + 1); }, 2400);
+      },
+      tsteps,
+      hasSel: !!sel, noSel: !sel, info, clearSel: () => { const v = self.V(); if (v) v.select(null); },
+      selIsolated: s.iso && s.iso === s.sel ? 'true' : 'false',
+      isoSel: () => { const v = self.V(); if (v && self.state.sel) v.isolate(self.state.sel); },
+      focusSel: () => { const v = self.V(); if (v && self.state.sel) v.focus(self.state.sel); },
+      showHover: !!(s.hov && GROUPS[s.hov]) && s.hov !== s.sel, hoverName: s.hov && GROUPS[s.hov] ? GROUPS[s.hov].name : '',
+      cats, partCount: String(Object.keys(GROUPS).length || 22),
+      showAll: () => { const v = self.V(); if (v) v.showAll(); },
+      stack: this.stack(),
+      goSequence: () => self.setMode('sequence'), goMotor: () => self.setMode('motor'), goGear: () => self.setMode('gearbox'),
+      goTorque: () => { self.setMode('torque'); const v = self.V(); if (v) v.setTorqueStep(self.state.tstep || 1); },
+      coils, mains, hals, arrowOp: s.mArrows ? '0.9' : '0', fluxIn, fluxOut, mFlux: s.mFlux,
+      mArrows: s.mArrows ? 'true' : 'false', mPhase: s.mPhase ? 'true' : 'false',
+      tArrows: () => self.setState({ mArrows: !self.state.mArrows }), tPhase: () => self.setState({ mPhase: !self.state.mPhase }), tFlux: () => self.setState({ mFlux: !self.state.mFlux }),
+      cmpCells, femm, cmpTitle: CMP[s.cmp].title, cmpBody: CMP[s.cmp].body,
+      gearPaused: s.gearPaused ? '1' : '0', gearRunning: s.gearPaused ? 'false' : 'true', gearLabel: s.gearPaused ? 'Play' : 'Pause',
+      toggleGear: () => self.setState({ gearPaused: !self.state.gearPaused }), gearWhy,
+      flowChips, tcards,
+      bigStats: [
+        { v: '29.4', u: 'N·m', l: 'Peak holding torque', q: 'Reported test result at the 50 A current limit. Not a continuous or rated torque.', tag: 'Measured · reported', col: '#7cc4e0' },
+        { v: '728', u: 'g', l: 'Actuator mass', q: 'Reported in the article for the built actuator.', tag: 'Measured · reported', col: '#7cc4e0' },
+        { v: '40.38', u: 'N·m/kg', l: 'Torque-to-weight', q: 'Derived from the two figures above.', tag: 'Calculated', col: '#cfd5da' },
+        { v: '$40', u: '/ $70', l: 'Actuator / with controller', q: 'Historical, rounded, pre-tariff. Varies with supply.', tag: 'Historical estimate', col: '#e59a5c' }
+      ],
+      evChips, figs, bomBars, trades: this.trades(),
+      buildSteps: this.buildSteps(), cfg: [
+        { k: 'pole_pairs', v: '21' }, { k: 'current_lim', v: '50.0 A' }, { k: 'encoder mode / cpr', v: '257 (SPI abs) / 16384' },
+        { k: 'phase_resistance', v: '0.0899 Ω' }, { k: 'phase_inductance', v: '26.2 µH' }, { k: 'control / input mode', v: '3 / 3 (position)' }
+      ],
+      links: [
+        { t: 'GitHub repository', d: 'github.com/CKraft11/Ironless-QDD-Actuator', href: 'https://github.com/CKraft11/Ironless-QDD-Actuator' },
+        { t: 'Technical article', d: 'cadenkraft.com · design, build and test write-up', href: 'https://cadenkraft.com/ironless-cycloidal-planetary-actuator/' },
+        { t: 'CAD files', d: '/CAD · large files tracked with Git LFS', href: 'https://github.com/CKraft11/Ironless-QDD-Actuator/tree/main/CAD' },
+        { t: 'FEMM simulation files', d: '/FEMM · rotor configuration studies', href: 'https://github.com/CKraft11/Ironless-QDD-Actuator/tree/main/FEMM' },
+        { t: 'Bill of materials', d: 'BOM.xlsx · 18 purchased line items, priced 4/22/25', href: 'https://github.com/CKraft11/Ironless-QDD-Actuator/blob/main/BOM.xlsx' },
+        { t: 'Controller configuration', d: 'MKS XDrive Config.json · ODrive settings', href: 'https://github.com/CKraft11/Ironless-QDD-Actuator/blob/main/MKS%20XDrive%20Config.json' },
+        { t: 'Winding scheme', d: '36N42P Winding Scheme.png', href: 'https://github.com/CKraft11/Ironless-QDD-Actuator/blob/main/36N42P%20Winding%20Scheme.png' },
+        { t: 'MakerWorld mirror', d: 'Print and CAD files if LFS bandwidth runs out', href: 'https://makerworld.com/en/models/2042262-caden-kraft-s-qdd-cycloidal-planetary-actuator' },
+        { t: 'XDrive Mini drawing & pinout (third party)', d: 'Smurf/xdrive-mini-docs · copies of Makerbase’s size drawing and wiring diagram', href: 'https://github.com/Smurf/xdrive-mini-docs' },
+        { t: 'Makerbase XDrive Mini product page', d: 'makerbase3d.com · ODrive 3.6-based, AS5047P on board', href: 'https://makerbase3d.com/product/makerbase-xdrive-mini-high-precision-brushless-servo-motor-controller-based-on-odrive3-6-with-as5047p-on-board/' }
+      ]
+    };
+  }
+
+  stageTitle(n) { return ['Gearbox core', 'Gearbox clamshell & bearings', 'Stator & windings', 'Halbach rotor', 'Housing', 'Controller & cover'][n - 1] || ''; }
+  stageOf(g) {
+    const m = { sun: 1, planets: 1, pbearings: 1, pins: 1, carrier: 1, ring: 1, frame: 2, retainer: 2, b6710: 2, b6805: 2, axle: 2, stator: 3, coils: 3, rotor: 4, magMain: 4, magHal: 4, encoder: 4, housing: 5, pcb: 6, encplate: 6, terminals: 6, cover: 6, xt30: 6, fasteners: '2–6' };
+    return String(m[g] || '');
+  }
+  tsteps() {
+    return [
+      { short: 'Command', tag: 'Electrical', title: 'Command and commutation', body: 'The MKS XDrive Mini (an ODrive 3.6 derivative) runs field-oriented control. Its config reads an SPI absolute encoder at 16 384 counts, facing a diametric magnet on the rotor axis, and limits current to 50 A.' },
+      { short: 'Coils', tag: 'Electrical', title: 'Current through 36 coils', body: 'Three phases are spread over the 36 teeth in the AabBCcaABbcC pattern. Each tooth carries 6 turns of six parallel 0.4 mm strands.' },
+      { short: 'Air gap', tag: 'Electromagnetic', title: 'Force across a 0.7 mm gap', body: 'The rotating stator field pulls on 84 magnets. The Halbach arrangement concentrates flux toward the stator without iron behind the magnets.' },
+      { short: 'Reduction', tag: 'Mechanical', title: 'Rotor turns the sun', body: 'Rotor and 6-lobe sun turn together. Three 15-lobe planets roll around the inside of the fixed 36-lobe ring.' },
+      { short: 'Output', tag: 'Mechanical', title: 'Carrier delivers ≈7× torque', body: 'The planet carrier turns at one-seventh of rotor speed with up to seven times the torque, before losses, and drives the output face.' }
+    ];
+  }
+  stack() {
+    const self = this;
+    const L = [
+      ['M4 shoulder bolt & spacer', 'Centre bolt through sun and rotor hub', 'axle', 18, '#55585d'],
+      ['Output clamshell frame', 'Ø115 mm flange · 8× M2.5 countersunk into heat-set inserts', 'frame', 92, '#454b52'],
+      ['6710 + 6805 bearings', 'Upper pair: carrier and sun support (BOM 2 + 2)', 'b6710', 52, '#c9ced3'],
+      ['Planet carrier · output', 'Two plates, three spacer blocks, M2.5 + M3 inserts', 'carrier', 54, '#e59a5c'],
+      ['Ring gear ×2 halves', 'Double-helical, 36 lobes, keyed into the stator bore', 'ring', 66, '#565d65'],
+      ['Planets ×3 + sun', '15-lobe planets on 5×12 pins and 5×14×5 bearings; 6-lobe sun', 'planets', 60, '#7c858e'],
+      ['Stator + 36 coils', '10010 stator, teeth outward, Ø100 mm', 'stator', 80, '#c47b4f'],
+      ['Ironless rotor + 84 magnets', 'Printed ring around the stator, 0.7 mm gap', 'rotor', 90, '#d3d7db'],
+      ['Lower clamshell ring', 'Retains the lower ring half; M3×6 and M2 nuts', 'retainer', 66, '#454b52'],
+      ['Encoder magnet & holder', 'On the rotor axis, read through the board', 'encoder', 14, '#6b737c'],
+      ['Main housing', 'Ventilated printed shell around the rotor', 'housing', 98, '#2f343a'],
+      ['Encoder plate & standoffs', 'Ø10.5 mm window over the AS5047P, facing the motor', 'encplate', 52, '#3a4046'],
+      ['MKS XDrive Mini', '63 × 58 mm board, rebuilt from the Makerbase drawing and photos', 'pcb', 52, '#2d3a3f'],
+      ['Controller cover + XT60', 'Closes the electronics bay', 'cover', 54, '#2f343a']
+    ];
+    return L.map((l, i) => ({ idx: String(i + 1).padStart(2, '0'), name: l[0], note: l[1], bar: l[3] + 'px', col: l[4], go: () => self.goGroup(l[2]) }));
+  }
+  trades() {
+    return [
+      { title: 'Cost', plus: 'Summed BOM is $72.62 with controller; the stator and controller are about two-thirds of it, so the printed design itself is cheap.', minus: 'Prices are April 2025, pre-tariff. Filament, printer time and failed prints are not in the BOM.', src: 'BOM.xlsx · article' },
+      { title: 'Printable construction', plus: 'Every custom part is FFF-printable; threads come from heat-set inserts, not machining.', minus: 'Plastic creeps. The README warns a PLA rotor will creep under magnetic load: print it at 100% infill in a stiff, low-creep engineering plastic.', src: 'README · article' },
+      { title: 'Ironless Halbach rotor', plus: '91.4% of the best simulated torque with no iron ring, and lower rotational inertia for fast direction changes.', minus: 'Twice the magnet count, a fixture to set the gap, and glue through radial holes. The torque comparison is simulated, not measured.', src: 'Article · FEMM table' },
+      { title: 'Cycloidal lobes', plus: 'Rounded, continuous outlines suit nozzle radii and avoid thin printed teeth that shear at the root.', minus: 'Backlash and wear are design claims and hand impressions, not measurements. The author worries glass-filled nylon may abrade the lobes over time.', src: 'Article' },
+      { title: 'Packaging', plus: 'Putting the gearbox inside the stator bore gives a flat Ø121 × 57 mm package (CAD) with the controller on the back.', minus: 'The clamshell, ring keying and stacked bearings make assembly order and tolerances critical; the article notes many prototype iterations.', src: 'CAD · article' },
+      { title: 'Heat', plus: 'Thermocouples inside the coils were used; the 29.4 N·m test ended with ≈78 °C at the coil surface and no failure.', minus: 'No continuous rating or thermal model is published; the author felt he was near the limit of coils and plastic gearbox.', src: 'Article' },
+      { title: 'Durability', plus: 'No mechanical or electrical failure in the reported tests.', minus: 'No long-term or cycle testing is reported; gear material choice (PA6-GF) was later questioned by the author.', src: 'Article' },
+      { title: 'Controller', plus: 'A ~$30 ODrive 3.6 derivative with an on-board encoder keeps the system cost down.', minus: 'Chosen for price over newer ODrive or moteus boards; it is an older ODrive 3.6 design. The stock screw terminals appear too tall for the printed cover in the CAD.', src: 'Article · BOM · Makerbase docs' }
+    ];
+  }
+  buildSteps() {
+    return [
+      { n: '01', kicker: 'CAD & simulation', title: 'Model in Fusion 360, compare rotors in FEMM', body: 'Four rotor variants were compared for static torque before committing to an ironless Halbach rotor with a 0.7 mm gap. The gearbox profiles came from the author’s extension of pygeartrain.', cap: 'Image: preview thumbnail embedded in the shared .f3d file (CAD render, not a photo).', hasImg: true, img: '/_blob/e29b8ba55a9bfc326ae702718d698960', imgBg: '#ffffff', alt: 'Fusion 360 preview render of the actuator from the controller side', hasLink: false, link: '', hasCfg: false },
+      { n: '02', kicker: 'Printing', title: 'Print every custom part in PA6-GF', body: 'All printed parts were glass-filled nylon. Nearly every part went through several revisions; the article shows the pile of failed prints. In hindsight the author would print the gears in plain nylon.', cap: 'Photo of failed and revised parts is in the article.', hasImg: false, hasLink: true, link: 'See the prototype parts photo', hasCfg: false },
+      { n: '03', kicker: 'Magnets', title: 'Insert 84 magnets with a fixture', body: 'A fixture held the magnets at the target air gap while they were slid in from the bottom; radial holes behind each magnet let them be superglued from behind once all were in place.', cap: 'Photos of the finished rotor and insertion fixture are in the article.', hasImg: false, hasLink: true, link: 'See the rotor and fixture photos', hasCfg: false },
+      { n: '04', kicker: 'Winding', title: 'Wind the stator with six strands at once', body: 'One spool was split into six smaller spools and fed together: 6 turns per tooth (5 full, 1 partial) of six parallel 0.4 mm strands, about three hours of work, then each phase checked on an LCR meter.', cap: 'Image: 36N42P winding scheme from the repository (online calculator output).', hasImg: true, img: '/_blob/0ddd362c4863a14c3af3f730d60d87df', imgBg: '#ffffff', alt: 'Winding diagram for 36 slots and 42 poles showing phases A, B and C around the stator', hasLink: true, link: 'See the winding setup photos', hasCfg: false },
+      { n: '05', kicker: 'Assembly', title: 'Build the gearbox module, then the motor around it', body: 'The gearbox module runs through the centre and the stator goes into its clam-shell. The README calls for an M3 tap for the planet carrier and lithium grease inside the gearbox.', cap: 'Final assembly and gearbox photos are in the article.', hasImg: false, hasLink: true, link: 'See the assembly photos', hasCfg: false },
+      { n: '06', kicker: 'Controller', title: 'Configure the MKS XDrive Mini', body: 'An ODrive 3.6-based board chosen for cost. Selected values from the published configuration file:', cap: 'Source: MKS XDrive Config.json in the repository (axis0).', hasImg: false, hasLink: false, link: '', hasCfg: true },
+      { n: '07', kicker: 'Testing', title: 'Tune, measure Kv, then pull until the limit', body: 'A 250 mm printed arm was used for tuning; Kv was measured by back-driving. 14 N·m on a 25 A lab supply, then 29.4 N·m on a loaned Audi e-tron module until the 50 A limit, with no failure.', cap: 'Test set-up photos and videos are in the article.', hasImg: false, hasLink: true, link: 'See the test set-ups and videos', hasCfg: false }
+    ];
+  }
+  info() {
+    return {
+      housing: { title: 'Main housing', spec: 'Printed shell · ventilated lattice windows', fn: 'Encloses the rotor, carries the controller bay underneath and bolts to the clamshell flange.', mat: 'PA6-GF, FFF-printed (all printed parts per the article); M4 heat-set inserts.', why: 'The lattice windows are visible in the CAD; the article does not state their purpose (likely cooling and mass).', rel: 'Outermost layer around the rotor, between the clamshell flange and the controller.', src: ['Article', 'CAD', 'Inferred'] },
+      frame: { title: 'Output clamshell frame', spec: 'Ø115 mm flange · 8× M2.5 countersunk', fn: 'Upper half of the gearbox module’s clam-shell; locates the ring gear and upper bearings and forms the mounting flange.', mat: 'PA6-GF, printed; M2.5 and M4 heat-set inserts.', why: 'The article says the stator is assembled into the gearbox module’s clam-shell, so the gearbox can run through the centre of the motor.', rel: 'Top of the stack on the output side.', src: ['Article', 'CAD'] },
+      retainer: { title: 'Lower clamshell ring', spec: 'Ø81 mm ring · M3×6 and M2 locknuts', fn: 'Closes the clam-shell from below and holds the lower ring-gear half.', mat: 'PA6-GF, printed.', why: 'A split clam-shell lets a double-helical ring be built from two halves around the planets.', rel: 'Below the stator, inside the rotor.', src: ['CAD', 'Inferred'] },
+      cover: { title: 'Controller cover', spec: 'Printed cover with power input', fn: 'Closes the electronics bay on the back of the actuator.', mat: 'Printed plastic.', why: 'Keeps the controller integrated in the actuator envelope.', rel: 'Outermost layer on the controller side.', src: ['CAD'] },
+      stator: { title: '10010 stator', spec: '36 slots · Ø100 mm OD · Ø78 mm bore', fn: 'Laminated steel core that carries the windings; its teeth point outward toward the rotor (outrunner).', mat: 'Bought part, laminated electrical steel ($17.63 in the BOM).', why: 'An off-the-shelf stator avoids the hardest part to make at home. Its large bore leaves room for the gearbox.', rel: 'Centre of the motor; the ring gear is keyed into its bore.', src: ['Article', 'BOM', 'CAD'] },
+      coils: { title: 'Windings', spec: '36 coils · 6 turns · 6 × 0.4 mm strands', fn: 'Three-phase windings that produce the rotating field.', mat: 'Enameled 0.4 mm copper magnet wire (60 units in the BOM).', why: 'Six thin strands in parallel act like a thicker conductor but are easier to wind. Phase R matched within ±0.76% on an LCR meter.', rel: 'Around each stator tooth; pattern AabBCcaABbcC ×3.', src: ['Article', 'Repo image', 'BOM'] },
+      rotor: { title: 'Ironless rotor', spec: 'Printed ring · no back-iron', fn: 'Holds 84 magnets around the stator and transmits torque through its hub to the sun gear.', mat: 'PA6-GF in the build. README: 100% infill, high-stiffness, low-creep plastic; PLA will creep.', why: 'No iron ring: lower mass and rotational inertia, at 91.4% of the best simulated torque.', rel: 'Wraps the stator with a 0.7 mm gap; hub bolts to the sun at the bottom.', src: ['Article', 'README'] },
+      magMain: { title: 'Main-pole magnets', spec: '42 × N52 · 12 × 5 × 3 mm', fn: 'Radially magnetised poles; 42 poles = 21 pole pairs (matches the controller’s pole_pairs).', mat: 'Sintered NdFeB, nickel plated (bought; $0.119 each).', why: 'Standard block magnets are cheap and easy to source.', rel: 'Rotor inner wall, alternating with Halbach magnets; inner face 0.7 mm from the stator.', src: ['Article', 'BOM', 'Config', 'CAD'] },
+      magHal: { title: 'Halbach magnets', spec: '42 × N50 · ½ × ⅛ × 1/16 in', fn: 'Thin, tangentially magnetised magnets between the main poles that steer flux toward the stator.', mat: 'Sintered NdFeB (bought; $0.14 each).', why: 'They replace the job of back-iron: closing flux between poles while weakening the field on the outside.', rel: 'Between each pair of main-pole magnets.', src: ['Article', 'BOM', 'Inferred orientation'] },
+      sun: { title: 'Sun gear', spec: '6 lobes · Ø25 mm hub', fn: 'Input of the reduction; turns with the rotor.', mat: 'Printed (PA6-GF in the build).', why: 'Ratio = 1 + 36/6 = 7 with the ring held fixed.', rel: 'Centre of the gearbox, inside the 6805 bearings, on the shoulder bolt.', src: ['CAD (lobe count)', 'Article (ratio)'] },
+      planets: { title: 'Planet gears', spec: '3 × 15 lobes · double-helical', fn: 'Roll between sun and fixed ring; carry load to the carrier through their pins.', mat: 'Printed (PA6-GF in the build).', why: 'Three planets share load; (6 + 36)/3 is an integer, so they space evenly.', rel: 'Between sun and ring, each on two 5×14×5 bearings and a 5×12 pin.', src: ['CAD', 'BOM'] },
+      ring: { title: 'Ring gear', spec: '36 lobes · two opposite-hand helical halves', fn: 'Fixed reaction member of the planetary.', mat: 'Printed (PA6-GF in the build).', why: 'Splitting a double-helical ring into halves makes it printable and assemblable around the planets.', rel: 'Keyed into the stator bore at the motor mid-plane (CAD).', src: ['CAD', 'Article'] },
+      carrier: { title: 'Planet carrier', spec: 'Output · two plates + three spacer blocks', fn: 'Collects planet motion and turns at 1/7 rotor speed with ≈7× torque (ideal).', mat: 'Printed; M3 and M2.5 heat-set inserts; 9 × M2.5 countersunk screws.', why: 'README: an M3 tap is needed when assembling the planet carrier.', rel: 'Straddles the planets; top plate faces the output side.', src: ['CAD', 'README', 'BOM'] },
+      pins: { title: 'Planet pins & thrust washers', spec: '3 × 5 × 12 mm pins · 6 washers', fn: 'Axles for the planets, fixed to the carrier.', mat: 'Steel dowel pins (BOM); washers as modelled.', why: 'Hardened pins give the plastic planets a true axis.', rel: 'Through each planet’s bearings.', src: ['BOM', 'CAD'] },
+      pbearings: { title: 'Planet bearings', spec: '6 × 5 × 14 × 5 mm', fn: 'Two per planet so the planets spin freely on their pins.', mat: 'Steel ball bearings ($0.32 each).', why: 'Rolling bearings instead of plastic-on-steel sliding.', rel: 'Pressed into the planets.', src: ['BOM', 'CAD'] },
+      b6710: { title: '6710 bearings', spec: '2 × 50 × 62 × 6 mm', fn: 'Large thin-section bearings above and below the gearbox.', mat: 'Steel ball bearings ($2.26 each).', why: 'Thin section keeps the package flat while supporting a large-diameter member.', rel: 'Either side of the carrier in the clamshell (role inferred from position).', src: ['BOM', 'CAD', 'Inferred'] },
+      b6805: { title: '6805 bearings', spec: '2 × 25 × 37 × 7 mm', fn: 'Support the sun gear hub on both sides.', mat: 'Steel ball bearings ($1.29 each).', why: 'Their 25 mm bore matches the sun’s Ø25 mm hub in the CAD.', rel: 'Inside the carrier, around the sun (role inferred from position).', src: ['BOM', 'CAD', 'Inferred'] },
+      axle: { title: 'Shoulder bolt, spacer & locknut', spec: 'M4 × 25 shoulder bolt · M4 locknut', fn: 'Runs along the centreline through the sun and rotor hub and clamps the stack.', mat: 'Steel (BOM); spacer as modelled.', why: 'A shoulder bolt gives a precise Ø5 mm journal from a cheap part.', rel: 'On the axis, from the output face to under the rotor hub.', src: ['BOM', 'CAD', 'Inferred'] },
+      fasteners: { title: 'Fasteners & heat-set inserts', spec: '20 M2.5×12 CS · 8 M3×6 · 4 M2×25 + nuts · 36 inserts', fn: 'Hold the printed parts together. Brass inserts: 7 × M2.5, 14 × M3, 15 × M4.', mat: 'Steel screws; brass heat-set inserts.', why: 'Inserts give durable metal threads in printed plastic.', rel: 'Throughout; they explode with the part they hold.', src: ['BOM', 'CAD'] },
+      encoder: { title: 'Encoder magnet & holder', spec: 'Diametric magnet on the rotor axis', fn: 'Gives the controller absolute rotor angle for commutation.', mat: 'Magnet in a printed holder.', why: 'The config uses an SPI absolute encoder (mode 257, 16 384 CPR), the AS5047P on the MKS board; the article calls it a built-in hall-effect encoder.', rel: 'Bottom of the shaft, facing the board’s centre hole.', src: ['Config', 'CAD', 'Article'] },
+      pcb: { title: 'MKS XDrive Mini', spec: '63 × 58 mm · 6 × Ø3.3 mm holes · ODrive 3.6-based', fn: 'Field-oriented control of the three phases with closed-loop position control. Interfaces: CAN, ABZ/Hall, SWD, GPIO, SPI and USB-C, plus RESET/BOOT buttons and a 120 Ω CAN termination jumper.', mat: 'Bought board ($29.99 in the BOM): five 100 µF 63 V electrolytics, a SOIC-8 CAN transceiver, and the AS5047P on the underside at the board centre.', why: 'Chosen over newer ODrive and moteus boards for cost. Rebuilt here because the board body in the original CAD is simplified.', rel: 'Outline and holes from the Makerbase drawing; parts placed from Makerbase photos (about ±1 mm); heights estimated. Sits on six standoffs in the bay under the housing.', src: ['Makerbase drawing', 'Makerbase photos', 'BOM', 'Article', 'Config'] },
+      encplate: { title: 'Encoder-side plate & standoffs', spec: '63 × 58 mm · Ø10.5 mm centre window · 4 slots', fn: 'Covers the underside of the board; the centre window lets the encoder magnet sit over the AS5047P.', mat: 'Black PCB-style plate on six standoffs, as the board is sold.', why: 'Protects the underside while leaving the sensor open to the magnet.', rel: 'Between the board and the housing floor. Stack heights (3.0 mm standoffs, 1.4 mm plate) follow the author’s CAD; the nuts on the shipped part are omitted.', src: ['Makerbase photos', 'CAD'] },
+      terminals: { title: 'Stock screw terminals', spec: '3-pole A/B/C · 2-pole DC · 2-pole AUX · heights estimated', fn: 'Motor-phase, DC-input and brake-resistor (AUX) connections as the board ships.', mat: 'Green terminal blocks with clamp screws.', why: 'Hidden by default: at an estimated ~14.5 mm they would pass through the printed controller cover in the author’s CAD, which also carries a separate XT60. Whether he removed them is not stated in the sources.', rel: 'Along the top edge of the board, overhanging it by about 3 mm. Toggle with the eye icon in the parts list.', src: ['Makerbase photos', 'Inferred'] },
+      xt30: { title: 'XT60 power connector', spec: 'As modelled in the author’s CAD (XT60 lettering on the part)', fn: 'DC input to the controller.', mat: 'Bought part.', why: 'A standard high-current battery connector.', rel: 'In the controller cover.', src: ['CAD'] }
+    };
+  }
+}
+</script>
+</body>
+</html>

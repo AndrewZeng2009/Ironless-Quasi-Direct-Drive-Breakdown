@@ -1,0 +1,7 @@
+node_modules/
+dist/
+playwright-report/
+test-results/
+playwright-run.log
+*.tsbuildinfo
+.claude/
