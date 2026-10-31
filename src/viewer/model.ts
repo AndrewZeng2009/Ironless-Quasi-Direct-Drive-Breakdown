@@ -1,6 +1,10 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
+import { toCreasedNormals } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+
+/** Low-poly organic parts that get softened shading (see build()). */
+const SMOOTH_GROUPS = new Set(['coils', 'fasteners']);
 import { GROUPS, type GroupKey, type MaterialKey } from '../content/parts';
 import type { DecalKind } from './decals';
 
@@ -112,9 +116,13 @@ async function build(onProgress?: (fraction: number) => void): Promise<ModelData
     if (!mesh.isMesh) return;
     const m = meta.get(mesh.name) ?? meta.get(mesh.parent?.name ?? '');
     if (!m) { console.warn('No metadata for node', mesh.name); return; }
-    const geometry = toFloatPositions(mesh.geometry.clone());
+    let geometry = toFloatPositions(mesh.geometry.clone());
     geometry.applyMatrix4(mesh.matrixWorld);
-    if (!geometry.attributes.normal) geometry.computeVertexNormals();
+    if (SMOOTH_GROUPS.has(m.group)) {
+      // Coils and fasteners were simplified to very few triangles; with hard edges between every
+      // facet they read as crystals. Blend normals across facets < 70 deg apart (shading only).
+      geometry = toCreasedNormals(geometry, (70 * Math.PI) / 180);
+    } else if (!geometry.attributes.normal) geometry.computeVertexNormals();
     let center: THREE.Vector3 | null = null;
     if (m.kinematics === 'planet' && m.planet != null) {
       const c = parts.planetCenters_xz_mm[String(m.planet)];

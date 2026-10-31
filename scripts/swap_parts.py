@@ -82,6 +82,8 @@ WALL_R = 57.4
 # the STEP lip differs and would poke through the frame's chamfered edge, so the original housing
 # triangles are used there instead.
 FRAME_Y, FRAME_R = 16.0, 58.6
+USE_FRAME_ZONE = False  # not needed since the housing is meshed at 5 mm (it caused shards)
+FLOOR_Y_MAX = -18.0
 in_frame_zone = lambda pts: (pts[:, 1] > FRAME_Y) & (np.hypot(pts[:, 0], pts[:, 2]) < FRAME_R)
 cn = (Pc[Ic[:, 0]] + Pc[Ic[:, 1]] + Pc[Ic[:, 2]]) / 3
 interior = np.hypot(cn[:, 0], cn[:, 2]) < WALL_R
@@ -93,7 +95,7 @@ flag[interior] = nn(cn[interior], S_old) > KEEP_IF_FARTHER_MM
 # the frame where it cannot show through, so it is kept.
 under_flange = (cn[:, 1] > 7.4) & (cn[:, 1] < FRAME_Y) & (np.hypot(cn[:, 0], cn[:, 2]) > 55.0)
 flag &= ~under_flange
-flag |= in_frame_zone(cn)
+if USE_FRAME_ZONE: flag |= in_frame_zone(cn)
 # Decide per CAD face, not per triangle: a face is dropped whole when most of its area is
 # off-design, so no face is left half-present (no notches, no slivers).
 Fc = c['F'].astype(np.int64)
@@ -102,13 +104,66 @@ nf = int(Fc.max()) + 1
 face_off = np.bincount(Fc, weights=area * flag, minlength=nf) > 0.5 * np.bincount(Fc, weights=area, minlength=nf)
 off_design = face_off[Fc]
 print(f'housing: dropped {int(face_off.sum())} of {nf} STEP faces as not in the modelled design')
-Ic = Ic[~off_design]
+Ic_keep = Ic[~off_design]
+# The dropped top plate (one CAD face at y 16.95) also carries the housing's exposed rim and the cap
+# of the phase-wire bump, outside the output frame's top edge (r 57.0). Add that part back, clipped
+# exactly at r = 57.0 so it meets the frame edge without overlapping the frame's own top face.
+TOP_Y, RIM_R = 16.95, 57.0
+def clip_outside_r(tri, r0):
+    f = lambda p: np.hypot(p[0], p[2]) - r0
+    out = []
+    for k in range(3):
+        p, q = tri[k], tri[(k + 1) % 3]; fp, fq = f(p), f(q)
+        if fp >= 0: out.append(p)
+        if (fp >= 0) != (fq >= 0): out.append(p + (q - p) * (fp / (fp - fq)))
+    return out
+top_dropped = off_design & (np.abs(Pc[Ic[:, 0], 1] - TOP_Y) < 0.02) & (np.abs(Pc[Ic[:, 1], 1] - TOP_Y) < 0.02) & (np.abs(Pc[Ic[:, 2], 1] - TOP_Y) < 0.02)
+rim_P, rim_I = [], []
+for t in np.where(top_dropped)[0]:
+    poly = clip_outside_r(Pc[Ic[t]], RIM_R)
+    if len(poly) < 3: continue
+    base = len(Pc) + len(rim_P); rim_P.extend(poly)
+    rim_I.extend([base, base + j, base + j + 1] for j in range(1, len(poly) - 1))
+if rim_P:
+    Pc = np.vstack([Pc, np.array(rim_P)]); Ic_keep = np.vstack([Ic_keep, np.array(rim_I, np.uint32)])
+print(f'housing: restored {len(rim_I)} rim/bump-cap triangles of the top plate outside r {RIM_R}')
+# The phase-wire channel in the STEP revision reaches further in (r 52 mm) than in the modelled
+# design, whose channel stops at r 56.4 (original mesh). Its side walls would otherwise stand inside
+# the motor as thin one-sided fins, so trim everything in the bump sector back to r >= 56.4.
+CH_R = 56.4
+cn_k = Pc[Ic_keep].mean(1)
+in_bump = (cn_k[:, 2] > 40) & (np.abs(cn_k[:, 0]) < 16) & (cn_k[:, 1] > 1.9)
+tri_r = np.hypot(Pc[Ic_keep][:, :, 0], Pc[Ic_keep][:, :, 2])
+cross = in_bump & (tri_r.min(1) < CH_R)
+ch_P, ch_I = [], []
+for t in np.where(cross)[0]:
+    poly = clip_outside_r(Pc[Ic_keep[t]], CH_R)
+    if len(poly) < 3: continue
+    base = len(Pc) + len(ch_P); ch_P.extend(poly)
+    ch_I.extend([base, base + j, base + j + 1] for j in range(1, len(poly) - 1))
+Ic_keep = Ic_keep[~cross]
+if ch_P:
+    Pc = np.vstack([Pc, np.array(ch_P)]); Ic_keep = np.vstack([Ic_keep, np.array(ch_I, np.uint32)])
+print(f'housing: trimmed {int(cross.sum())} phase-wire channel triangles back to r {CH_R}')
+Ic = Ic_keep
 used_n, local_n = np.unique(Ic, return_inverse=True)
 Pc = Pc[used_n]; Ic = local_n.reshape(-1, 3).astype(np.uint32)
 cent = (Pof[Io[:, 0]] + Pof[Io[:, 1]] + Pof[Io[:, 2]]) / 3
 S = sample(Pc, Ic, 150000, 7)
 # skip the far-from-axis band quickly: test every original triangle centroid
-far = (nn(cent, S) > KEEP_IF_FARTHER_MM) & ~in_frame_zone(cent)
+# only the floor plate is missing from the STEP part; elsewhere the original mesh's leftovers are
+# simplification debris (long sliver triangles), so original triangles are kept in the floor band only
+far = (nn(cent, S) > KEEP_IF_FARTHER_MM) & (cent[:, 1] < FLOOR_Y_MAX)
+# ...minus needle-like debris: long, sub-0.25 mm-wide triangles standing out of the floor plane
+e0, e1, e2 = (np.linalg.norm(Pof[Io[:, k]] - Pof[Io[:, (k + 1) % 3]], axis=1) for k in range(3))
+longest = np.maximum(np.maximum(e0, e1), e2)
+tn_o = np.cross(Pof[Io[:, 1]] - Pof[Io[:, 0]], Pof[Io[:, 2]] - Pof[Io[:, 0]])
+area_o = 0.5 * np.linalg.norm(tn_o, axis=1); ny_o = np.abs(tn_o[:, 1]) / (2 * area_o + 1e-12)
+width_o = 2 * area_o / (longest + 1e-12)
+# (degenerate slivers under 0.05 mm wide have no meaningful facing, so they go regardless)
+needle = (longest > 4.0) & (((width_o < 0.3) & (ny_o < 0.9)) | (width_o < 0.05))
+print(f'housing: dropped {int((far & needle).sum())} needle-like debris triangles from the original floor')
+far &= ~needle
 keep = Io[far]
 used, local = np.unique(keep, return_inverse=True)
 P_keep = Po[used]; I_keep = local.reshape(-1, 3).astype(np.uint32) + len(Pc)
