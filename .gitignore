@@ -5,3 +5,5 @@ test-results/
 playwright-run.log
 *.tsbuildinfo
 .claude/
+
+__pycache__/
