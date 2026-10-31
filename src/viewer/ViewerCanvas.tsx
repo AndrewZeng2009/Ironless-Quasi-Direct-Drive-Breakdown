@@ -101,7 +101,12 @@ export function ViewerCanvas({ engine, onStatus, label, interactive, overlay, ch
   const [webgl, setWebgl] = useState(true);
   // Resolution: at most 1.5× (sharp on high-DPI screens at a fraction of the cost of 2×),
   // dropping to 1× if the frame rate can't keep up.
-  const maxDpr = Math.min(typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1, MAX_DPR);
+  const deviceDpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
+  // the hero is decorative: 1x is plenty and halves its pixel cost on high-DPI screens
+  const maxDpr = engine.kind === 'hero' ? 1 : Math.min(deviceDpr, MAX_DPR);
+  // 4x MSAA is expensive and adds little once the screen is high-density; keep it on 1x screens
+  // and for the 1x hero, where jagged edges would show
+  const antialias = engine.kind === 'hero' || deviceDpr < 1.5;
   const [dpr, setDpr] = useState(maxDpr);
 
   useEffect(() => {
@@ -161,7 +166,7 @@ export function ViewerCanvas({ engine, onStatus, label, interactive, overlay, ch
           // position itself when it needs it
           resize={{ scroll: false, debounce: { scroll: 0, resize: 50 } }}
           camera={{ fov: 30, near: 0.5, far: 400, position: [0, 0, 34] }}
-          gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
+          gl={{ antialias, alpha: true, powerPreference: 'high-performance' }}
           onCreated={({ gl }) => {
             gl.toneMapping = THREE.ACESFilmicToneMapping;
             gl.toneMappingExposure = 1.05;

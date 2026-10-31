@@ -81,11 +81,12 @@ for start in range(len(patches)):
             want = flip[p] if score < 0 else (not flip[p])
             if flip[q] is None: flip[q] = want; queue.append(q)
 
-P_all, I_all, base, flipped = [], [], 0, 0
-for tri, f in zip(patches, flip):
+P_all, I_all, F_all, base, flipped = [], [], [], 0, 0
+for fi, (tri, f) in enumerate(zip(patches, flip)):
     if f: tri = tri[:, ::-1]; flipped += 1
     used, local = np.unique(tri, return_inverse=True)
     P_all.append(coords[used]); I_all.append(local.reshape(-1, 3) + base); base += len(used)
+    F_all.append(np.full(len(tri), fi, dtype=np.uint32))  # CAD face id per triangle
 P = np.concatenate(P_all).astype(np.float32); I = np.concatenate(I_all).astype(np.uint32)
 # signed volume: positive when the triangles face outward
 v0, v1, v2 = P[I[:, 0]].astype(np.float64), P[I[:, 1]].astype(np.float64), P[I[:, 2]].astype(np.float64)
@@ -95,5 +96,5 @@ if vol < 0:  # whole part came out inside-out: flip everything
 occ_vol = gmsh.model.occ.getMass(3, vol_tag)
 print(f'  mesh: {len(I)} triangles, {len(P)} vertices, faces flipped={flipped}, unsure={unsure}, '
       f'signed volume={vol/1000:.2f} cm3 (CAD solid: {occ_vol/1000:.2f} cm3)')
-np.savez_compressed(out, P=P, I=I)
+np.savez_compressed(out, P=P, I=I, F=np.concatenate(F_all))
 gmsh.finalize()

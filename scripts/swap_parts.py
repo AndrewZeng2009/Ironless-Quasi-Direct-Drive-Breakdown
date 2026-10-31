@@ -16,9 +16,10 @@ Placement (measured by shape matching against the original nodes; mm, +Y = motor
 The STEP outer case is a slightly later revision than the modelled design in places: it has no
 floor plate under the motor, and it has a top plate that would sit inside the output frame. So:
   - outer wall (r >= 57.4 mm, where the original mesh has the holes): new surface is used;
-  - inside that, new triangles are kept only within 1.5 mm of the original housing surface;
-  - triangles lying entirely in the output frame's ring zone (y > 7.4, r < 58.6 mm) are dropped from
-    both meshes, since the housing lip there pokes through the frame's chamfered edge;
+  - inside that, new geometry must lie within 1.5 mm of the original housing surface, and nothing
+    may sit in the output frame's ring zone near its top face (y > 16.0, r < 58.6 mm), where the STEP lip would poke
+    through the frame's chamfered edge. These checks are made per triangle but applied per CAD face:
+    a face is dropped whole when most of its area fails, so no face is left half-present;
   - original housing triangles > 1.5 mm from the new surface (the floor) are kept.
 
 Requires numpy.
@@ -80,20 +81,30 @@ WALL_R = 57.4
 # The output frame (y 7.55..16.80, r up to 58.5) sits in the housing's top; in the frame's ring zone
 # the STEP lip differs and would poke through the frame's chamfered edge, so the original housing
 # triangles are used there instead.
-FRAME_Y, FRAME_R = 7.4, 58.6
+FRAME_Y, FRAME_R = 16.0, 58.6
 in_frame_zone = lambda pts: (pts[:, 1] > FRAME_Y) & (np.hypot(pts[:, 0], pts[:, 2]) < FRAME_R)
 cn = (Pc[Ic[:, 0]] + Pc[Ic[:, 1]] + Pc[Ic[:, 2]]) / 3
 interior = np.hypot(cn[:, 0], cn[:, 2]) < WALL_R
 S_old = sample(Pof, Io, 200000, 11)
-off_design = np.zeros(len(Ic), bool)
-off_design[interior] = nn(cn[interior], S_old) > KEEP_IF_FARTHER_MM
-# drop triangles lying entirely inside the frame's ring zone; large top-face triangles that only
-# straddle its edge stay, so the housing's top surface keeps no notches
-off_design |= in_frame_zone(Pc[Ic[:, 0]]) & in_frame_zone(Pc[Ic[:, 1]]) & in_frame_zone(Pc[Ic[:, 2]])
+flag = np.zeros(len(Ic), bool)
+flag[interior] = nn(cn[interior], S_old) > KEEP_IF_FARTHER_MM
+# The lip under the frame's flange (y 7.4..16, r > 55) closes the gap between the frame's outer edge
+# and the housing wall. The original mesh has holes there, so it can't vouch for it; it sits under
+# the frame where it cannot show through, so it is kept.
+under_flange = (cn[:, 1] > 7.4) & (cn[:, 1] < FRAME_Y) & (np.hypot(cn[:, 0], cn[:, 2]) > 55.0)
+flag &= ~under_flange
+flag |= in_frame_zone(cn)
+# Decide per CAD face, not per triangle: a face is dropped whole when most of its area is
+# off-design, so no face is left half-present (no notches, no slivers).
+Fc = c['F'].astype(np.int64)
+area = 0.5 * np.linalg.norm(np.cross(Pc[Ic[:, 1]] - Pc[Ic[:, 0]], Pc[Ic[:, 2]] - Pc[Ic[:, 0]]), axis=1)
+nf = int(Fc.max()) + 1
+face_off = np.bincount(Fc, weights=area * flag, minlength=nf) > 0.5 * np.bincount(Fc, weights=area, minlength=nf)
+off_design = face_off[Fc]
+print(f'housing: dropped {int(face_off.sum())} of {nf} STEP faces as not in the modelled design')
 Ic = Ic[~off_design]
 used_n, local_n = np.unique(Ic, return_inverse=True)
 Pc = Pc[used_n]; Ic = local_n.reshape(-1, 3).astype(np.uint32)
-print(f'housing: dropped {off_design.sum()} STEP triangles inside r<{WALL_R} mm that are not in the modelled design')
 cent = (Pof[Io[:, 0]] + Pof[Io[:, 1]] + Pof[Io[:, 2]]) / 3
 S = sample(Pc, Ic, 150000, 7)
 # skip the far-from-axis band quickly: test every original triangle centroid
@@ -102,6 +113,31 @@ keep = Io[far]
 used, local = np.unique(keep, return_inverse=True)
 P_keep = Po[used]; I_keep = local.reshape(-1, 3).astype(np.uint32) + len(Pc)
 Ph = np.vstack([Pc.astype(np.float32), P_keep]); Ih = np.vstack([Ic, I_keep])
+# The floor plate only exists in the original (simplified) mesh, where simplification punched holes
+# in its flat faces; close them from their own surviving outlines (see fill_flat_holes.py).
+sys.path.insert(0, __import__('os').path.dirname(__import__('os').path.abspath(__file__)))
+from fill_flat_holes import fill_flat_holes, window_walls
+for fix in (fill_flat_holes, window_walls):
+    P_fill, I_fill = fix(Po, Io, -29.2, -18.0)
+    Ih = np.vstack([Ih, I_fill + len(Ph)]); Ph = np.vstack([Ph, P_fill])
+
+# The output frame lost its entire top face (y 16.95) to simplification: its outer edge, inner
+# edge, windows and screw holes all survive as open-edge loops. Rebuild it the same way.
+# Other original parts lost flat faces the same way; repair every remaining original node
+# (not the STEP-based rotor/housing walls, which are complete).
+quiet = lambda msg: None
+repaired = []
+SKIP_GROUPS = ('rotor', 'housing', 'fasteners', 'coils', 'magMain', 'magHal', 'pcb', 'encplate', 'terminals')
+for nd in g['nodes']:
+    if nd['name'].split('__')[0] in SKIP_GROUPS: continue
+    mi = nd['mesh']; Pn_, In_ = meshes[mi]
+    print(f'  checking {nd["name"]} ...', flush=True)
+    P_fill, I_fill = fill_flat_holes(Pn_, In_, -1e4, 1e4, report=quiet)
+    if len(I_fill):
+        meshes[mi] = (np.vstack([Pn_, P_fill]), np.vstack([In_, I_fill + len(Pn_)]))
+        a = 0.5 * np.abs(np.cross(P_fill[I_fill[:, 1]] - P_fill[I_fill[:, 0]], P_fill[I_fill[:, 2]] - P_fill[I_fill[:, 0]])[:, 1]).sum()
+        repaired.append(f"{nd['name']} {a / 100:.1f}cm2")
+print(f'flat-face repair on {len(repaired)} original parts: ' + ', '.join(repaired))
 old_h = len(Io); meshes[hi] = (Ph, Ih)
 print(f'rotor: {old_r} -> {len(Ir)} triangles')
 print(f'housing: {old_h} -> {len(Ih)} triangles ({len(Ic)} from STEP + {len(keep)} original floor triangles kept)')

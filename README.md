@@ -58,7 +58,7 @@ python scripts/swap_parts.py <handoff actuator.glb> actuator.raw.glb rotor.npz c
 npx gltf-transform meshopt actuator.raw.glb public/models/actuator.glb --level medium
 ```
 
-`swap_parts.py` documents the measured placement and the rule for the parts of the STEP housing that
+`swap_parts.py` also rebuilds flat faces that simplification deleted from other original parts (housing floor, output frame top face, lower clamshell ring) from their surviving outlines, via `scripts/fill_flat_holes.py`. It documents the measured placement and the rule for the parts of the STEP housing that
 are a later revision (floor plate missing, extra top plate): the original geometry wins there. The
 final file is meshopt-compressed with quantized positions (about 2.7 MB, ~1.4 MB gzipped);
 `src/viewer/model.ts` registers the decoder that ships with three.js.
